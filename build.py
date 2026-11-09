@@ -42,7 +42,8 @@ def sanitize(t):
 
 def main():
     src, pw = sys.argv[1], sys.argv[2]
-    out = sys.argv[3] if len(sys.argv) > 3 else os.path.join(HERE, "index.html")
+    args = [a for a in sys.argv[3:] if not a.startswith("--")]
+    out = args[0] if args else os.path.join(HERE, "index.html")
     raws = [json.load(open(f)) for f in sorted(glob.glob(os.path.join(src, "*.json")))]
     for d in raws:
         for i in (d.get("data", d).get("items") or []):
@@ -54,6 +55,11 @@ def main():
         d = json.load(open(f)); d = d.get("data", d)
         d.setdefault("id", os.path.splitext(os.path.basename(f))[0])
         trips.append(sanitize(d))
+    import hashlib
+    digest = hashlib.sha256(json.dumps(trips, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    hfile = os.path.join(os.path.dirname(os.path.abspath(out)), "data.sha256")
+    if os.path.exists(out) and os.path.exists(hfile) and open(hfile).read().strip() == digest and "--force" not in sys.argv:
+        print("unchanged: trips are the same as the published page, nothing to do"); return
     snap = {"title": "Jeric's Trips", "updatedAt": int(time.time() * 1000), "trips": trips, "photos": {}}
     app = open(os.path.join(HERE, "app-template.html"), encoding="utf-8").read()
     tag = '<script id="snapshot-data" type="application/json">' + json.dumps(snap, ensure_ascii=False).replace("</", "<\\/") + "</script>"
@@ -65,6 +71,7 @@ def main():
     payload = {"s": base64.b64encode(salt).decode(), "i": base64.b64encode(iv).decode(), "n": ITER, "c": base64.b64encode(ct).decode()}
     lock = open(os.path.join(HERE, "lock-template.html"), encoding="utf-8").read()
     open(out, "w", encoding="utf-8").write(lock.replace("__PAYLOAD__", json.dumps(payload)))
+    open(hfile, "w").write(digest + "\n")
     print(f"built {out}: {len(trips)} trips, {len(ct)//1024} KB encrypted")
 
 if __name__ == "__main__": main()
