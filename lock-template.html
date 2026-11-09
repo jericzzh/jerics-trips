@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive"><title>Jeric's Trips</title>
+<style>
+:root{--bg:#f5f5f7;--panel:#fff;--ink:#1d1d1f;--ink2:#86868b;--blue:#0071e3;--line:#e5e5ea;--red:#d70015}
+@media (prefers-color-scheme:dark){:root{--bg:#000;--panel:#1c1c1e;--ink:#f5f5f7;--ink2:#98989d;--blue:#2997ff;--line:#38383a;--red:#ff453a}}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;-webkit-font-smoothing:antialiased}
+.card{background:var(--panel);border-radius:22px;padding:32px 24px 26px;width:100%;max-width:380px;text-align:center}
+.ico{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#f0a35e,#c8643b);margin:0 auto 16px;display:flex;align-items:center;justify-content:center}
+h1{font-size:24px;letter-spacing:-.02em} p{color:var(--ink2);font-size:14px;margin:6px 0 20px;line-height:1.45}
+input[type=password]{width:100%;font:inherit;font-size:16px;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);outline:none}
+input[type=password]:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,113,227,.18)}
+label.rem{display:flex;gap:8px;align-items:center;justify-content:center;color:var(--ink2);font-size:13px;margin:12px 0 16px}
+button{width:100%;font:inherit;font-size:16px;font-weight:600;padding:13px;border:0;border-radius:980px;background:var(--blue);color:#fff;cursor:pointer}
+button:disabled{opacity:.6}
+.err{color:var(--red);font-size:13px;min-height:18px;margin-top:10px}
+</style></head><body>
+<form class="card" id="f">
+  <div class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+  <h1>Jeric's Trips</h1><p>Enter the password Jeric shared with you to see the trip plans.</p>
+  <input type="password" id="pw" placeholder="Password" autocomplete="current-password" autofocus>
+  <label class="rem"><input type="checkbox" id="rem" checked> Remember on this device</label>
+  <button id="go">View trips</button><div class="err" id="err" role="alert"></div>
+</form>
+<script>
+const P=__PAYLOAD__;const K="jt.pw";
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function open_(pw){
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(P.s),iterations:P.n,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(P.i)},key,b64(P.c));
+  return new TextDecoder().decode(pt);
+}
+function show(html){document.open();document.write(html);document.close();}
+const f=document.getElementById("f"),err=document.getElementById("err"),go=document.getElementById("go");
+f.onsubmit=async e=>{e.preventDefault();const pw=document.getElementById("pw").value;if(!pw)return;go.disabled=true;go.textContent="Unlocking…";err.textContent="";
+  try{const html=await open_(pw);try{document.getElementById("rem").checked?localStorage.setItem(K,pw):localStorage.removeItem(K)}catch{}show(html);}
+  catch{go.disabled=false;go.textContent="View trips";err.textContent="That password didn't work. Try again.";}};
+(async()=>{let pw=null;try{pw=localStorage.getItem(K)}catch{}if(pw){try{show(await open_(pw));}catch{try{localStorage.removeItem(K)}catch{}}}})();
+</script></body></html>

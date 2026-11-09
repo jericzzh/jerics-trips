@@ -1,0 +1,2380 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Jeric's Trips</title>
+<style>
+/* required styles */
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	}
+.leaflet-container {
+	overflow: hidden;
+	}
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	        user-select: none;
+	  -webkit-user-drag: none;
+	}
+/* Prevents IE11 from highlighting tiles in blue */
+.leaflet-tile::selection {
+	background: transparent;
+}
+/* Safari renders non-retina tile on retina better with this, but Chrome is worse */
+.leaflet-safari .leaflet-tile {
+	image-rendering: -webkit-optimize-contrast;
+	}
+/* hack that prevents hw layers "stretching" when loading new tiles */
+.leaflet-safari .leaflet-tile-container {
+	width: 1600px;
+	height: 1600px;
+	-webkit-transform-origin: 0 0;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	display: block;
+	}
+/* .leaflet-container svg: reset svg max-width decleration shipped in Joomla! (joomla.org) 3.x */
+/* .leaflet-container img: map is broken in FF if you have max-width: 100% on tiles */
+.leaflet-container .leaflet-overlay-pane svg {
+	max-width: none !important;
+	max-height: none !important;
+	}
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+	max-width: none !important;
+	max-height: none !important;
+	width: auto;
+	padding: 0;
+	}
+
+.leaflet-container img.leaflet-tile {
+	/* See: https://bugs.chromium.org/p/chromium/issues/detail?id=600120 */
+	mix-blend-mode: plus-lighter;
+}
+
+.leaflet-container.leaflet-touch-zoom {
+	-ms-touch-action: pan-x pan-y;
+	touch-action: pan-x pan-y;
+	}
+.leaflet-container.leaflet-touch-drag {
+	-ms-touch-action: pinch-zoom;
+	/* Fallback for FF which doesn't support pinch-zoom */
+	touch-action: none;
+	touch-action: pinch-zoom;
+}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.leaflet-container {
+	-webkit-tap-highlight-color: transparent;
+}
+.leaflet-container a {
+	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
+}
+.leaflet-tile {
+	filter: inherit;
+	visibility: hidden;
+	}
+.leaflet-tile-loaded {
+	visibility: inherit;
+	}
+.leaflet-zoom-box {
+	width: 0;
+	height: 0;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	z-index: 800;
+	}
+/* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */
+.leaflet-overlay-pane svg {
+	-moz-user-select: none;
+	}
+
+.leaflet-pane         { z-index: 400; }
+
+.leaflet-tile-pane    { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane  { z-index: 500; }
+.leaflet-marker-pane  { z-index: 600; }
+.leaflet-tooltip-pane   { z-index: 650; }
+.leaflet-popup-pane   { z-index: 700; }
+
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg    { z-index: 200; }
+
+.leaflet-vml-shape {
+	width: 1px;
+	height: 1px;
+	}
+.lvml {
+	behavior: none;
+	display: inline-block;
+	position: absolute;
+	}
+
+
+/* control positioning */
+
+.leaflet-control {
+	position: relative;
+	z-index: 800;
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+.leaflet-top,
+.leaflet-bottom {
+	position: absolute;
+	z-index: 1000;
+	pointer-events: none;
+	}
+.leaflet-top {
+	top: 0;
+	}
+.leaflet-right {
+	right: 0;
+	}
+.leaflet-bottom {
+	bottom: 0;
+	}
+.leaflet-left {
+	left: 0;
+	}
+.leaflet-control {
+	float: left;
+	clear: both;
+	}
+.leaflet-right .leaflet-control {
+	float: right;
+	}
+.leaflet-top .leaflet-control {
+	margin-top: 10px;
+	}
+.leaflet-bottom .leaflet-control {
+	margin-bottom: 10px;
+	}
+.leaflet-left .leaflet-control {
+	margin-left: 10px;
+	}
+.leaflet-right .leaflet-control {
+	margin-right: 10px;
+	}
+
+
+/* zoom and fade animations */
+
+.leaflet-fade-anim .leaflet-popup {
+	opacity: 0;
+	-webkit-transition: opacity 0.2s linear;
+	   -moz-transition: opacity 0.2s linear;
+	        transition: opacity 0.2s linear;
+	}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+	opacity: 1;
+	}
+.leaflet-zoom-animated {
+	-webkit-transform-origin: 0 0;
+	    -ms-transform-origin: 0 0;
+	        transform-origin: 0 0;
+	}
+svg.leaflet-zoom-animated {
+	will-change: transform;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
+	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
+	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
+	}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+	-webkit-transition: none;
+	   -moz-transition: none;
+	        transition: none;
+	}
+
+.leaflet-zoom-anim .leaflet-zoom-hide {
+	visibility: hidden;
+	}
+
+
+/* cursors */
+
+.leaflet-interactive {
+	cursor: pointer;
+	}
+.leaflet-grab {
+	cursor: -webkit-grab;
+	cursor:    -moz-grab;
+	cursor:         grab;
+	}
+.leaflet-crosshair,
+.leaflet-crosshair .leaflet-interactive {
+	cursor: crosshair;
+	}
+.leaflet-popup-pane,
+.leaflet-control {
+	cursor: auto;
+	}
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-grab .leaflet-interactive,
+.leaflet-dragging .leaflet-marker-draggable {
+	cursor: move;
+	cursor: -webkit-grabbing;
+	cursor:    -moz-grabbing;
+	cursor:         grabbing;
+	}
+
+/* marker & overlays interactivity */
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-image-layer,
+.leaflet-pane > svg path,
+.leaflet-tile-container {
+	pointer-events: none;
+	}
+
+.leaflet-marker-icon.leaflet-interactive,
+.leaflet-image-layer.leaflet-interactive,
+.leaflet-pane > svg path.leaflet-interactive,
+svg.leaflet-image-layer.leaflet-interactive path {
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+
+/* visual tweaks */
+
+.leaflet-container {
+	background: #ddd;
+	outline-offset: 1px;
+	}
+.leaflet-container a {
+	color: #0078A8;
+	}
+.leaflet-zoom-box {
+	border: 2px dotted #38f;
+	background: rgba(255,255,255,0.5);
+	}
+
+
+/* general typography */
+.leaflet-container {
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	}
+
+
+/* general toolbar styles */
+
+.leaflet-bar {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+	border-radius: 4px;
+	}
+.leaflet-bar a {
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+	width: 26px;
+	height: 26px;
+	line-height: 26px;
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	}
+.leaflet-bar a,
+.leaflet-control-layers-toggle {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	display: block;
+	}
+.leaflet-bar a:hover,
+.leaflet-bar a:focus {
+	background-color: #f4f4f4;
+	}
+.leaflet-bar a:first-child {
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	}
+.leaflet-bar a:last-child {
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom: none;
+	}
+.leaflet-bar a.leaflet-disabled {
+	cursor: default;
+	background-color: #f4f4f4;
+	color: #bbb;
+	}
+
+.leaflet-touch .leaflet-bar a {
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	}
+.leaflet-touch .leaflet-bar a:first-child {
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	}
+.leaflet-touch .leaflet-bar a:last-child {
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+	}
+
+/* zoom control */
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+	font: bold 18px 'Lucida Console', Monaco, monospace;
+	text-indent: 1px;
+	}
+
+.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
+	font-size: 22px;
+	}
+
+
+/* layers control */
+
+.leaflet-control-layers {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+	background: #fff;
+	border-radius: 5px;
+	}
+.leaflet-control-layers-toggle {
+	background-image: none;
+	width: 36px;
+	height: 36px;
+	}
+.leaflet-retina .leaflet-control-layers-toggle {
+	background-image: none;
+	background-size: 26px 26px;
+	}
+.leaflet-touch .leaflet-control-layers-toggle {
+	width: 44px;
+	height: 44px;
+	}
+.leaflet-control-layers .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+	display: none;
+	}
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+	display: block;
+	position: relative;
+	}
+.leaflet-control-layers-expanded {
+	padding: 6px 10px 6px 6px;
+	color: #333;
+	background: #fff;
+	}
+.leaflet-control-layers-scrollbar {
+	overflow-y: scroll;
+	overflow-x: hidden;
+	padding-right: 5px;
+	}
+.leaflet-control-layers-selector {
+	margin-top: 2px;
+	position: relative;
+	top: 1px;
+	}
+.leaflet-control-layers label {
+	display: block;
+	font-size: 13px;
+	font-size: 1.08333em;
+	}
+.leaflet-control-layers-separator {
+	height: 0;
+	border-top: 1px solid #ddd;
+	margin: 5px -10px 5px -6px;
+	}
+
+/* Default icon URLs */
+.leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */
+	background-image: none;
+	}
+
+
+/* attribution and scale controls */
+
+.leaflet-container .leaflet-control-attribution {
+	background: #fff;
+	background: rgba(255, 255, 255, 0.8);
+	margin: 0;
+	}
+.leaflet-control-attribution,
+.leaflet-control-scale-line {
+	padding: 0 5px;
+	color: #333;
+	line-height: 1.4;
+	}
+.leaflet-control-attribution a {
+	text-decoration: none;
+	}
+.leaflet-control-attribution a:hover,
+.leaflet-control-attribution a:focus {
+	text-decoration: underline;
+	}
+.leaflet-attribution-flag {
+	display: inline !important;
+	vertical-align: baseline !important;
+	width: 1em;
+	height: 0.6669em;
+	}
+.leaflet-left .leaflet-control-scale {
+	margin-left: 5px;
+	}
+.leaflet-bottom .leaflet-control-scale {
+	margin-bottom: 5px;
+	}
+.leaflet-control-scale-line {
+	border: 2px solid #777;
+	border-top: none;
+	line-height: 1.1;
+	padding: 2px 5px 1px;
+	white-space: nowrap;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.8);
+	text-shadow: 1px 1px #fff;
+	}
+.leaflet-control-scale-line:not(:first-child) {
+	border-top: 2px solid #777;
+	border-bottom: none;
+	margin-top: -2px;
+	}
+.leaflet-control-scale-line:not(:first-child):not(:last-child) {
+	border-bottom: 2px solid #777;
+	}
+
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	box-shadow: none;
+	}
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	border: 2px solid rgba(0,0,0,0.2);
+	background-clip: padding-box;
+	}
+
+
+/* popup */
+
+.leaflet-popup {
+	position: absolute;
+	text-align: center;
+	margin-bottom: 20px;
+	}
+.leaflet-popup-content-wrapper {
+	padding: 1px;
+	text-align: left;
+	border-radius: 12px;
+	}
+.leaflet-popup-content {
+	margin: 13px 24px 13px 20px;
+	line-height: 1.3;
+	font-size: 13px;
+	font-size: 1.08333em;
+	min-height: 1px;
+	}
+.leaflet-popup-content p {
+	margin: 17px 0;
+	margin: 1.3em 0;
+	}
+.leaflet-popup-tip-container {
+	width: 40px;
+	height: 20px;
+	position: absolute;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -20px;
+	overflow: hidden;
+	pointer-events: none;
+	}
+.leaflet-popup-tip {
+	width: 17px;
+	height: 17px;
+	padding: 1px;
+
+	margin: -10px auto 0;
+	pointer-events: auto;
+
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+	    -ms-transform: rotate(45deg);
+	        transform: rotate(45deg);
+	}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+	background: white;
+	color: #333;
+	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+	}
+.leaflet-container a.leaflet-popup-close-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border: none;
+	text-align: center;
+	width: 24px;
+	height: 24px;
+	font: 16px/24px Tahoma, Verdana, sans-serif;
+	color: #757575;
+	text-decoration: none;
+	background: transparent;
+	}
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:focus {
+	color: #585858;
+	}
+.leaflet-popup-scrolled {
+	overflow: auto;
+	}
+
+.leaflet-oldie .leaflet-popup-content-wrapper {
+	-ms-zoom: 1;
+	}
+.leaflet-oldie .leaflet-popup-tip {
+	width: 24px;
+	margin: 0 auto;
+
+	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
+	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
+	}
+
+.leaflet-oldie .leaflet-control-zoom,
+.leaflet-oldie .leaflet-control-layers,
+.leaflet-oldie .leaflet-popup-content-wrapper,
+.leaflet-oldie .leaflet-popup-tip {
+	border: 1px solid #999;
+	}
+
+
+/* div icon */
+
+.leaflet-div-icon {
+	background: #fff;
+	border: 1px solid #666;
+	}
+
+
+/* Tooltip */
+/* Base styles for the element that has a tooltip */
+.leaflet-tooltip {
+	position: absolute;
+	padding: 6px;
+	background-color: #fff;
+	border: 1px solid #fff;
+	border-radius: 3px;
+	color: #222;
+	white-space: nowrap;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+	}
+.leaflet-tooltip.leaflet-interactive {
+	cursor: pointer;
+	pointer-events: auto;
+	}
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	position: absolute;
+	pointer-events: none;
+	border: 6px solid transparent;
+	background: transparent;
+	content: "";
+	}
+
+/* Directions */
+
+.leaflet-tooltip-bottom {
+	margin-top: 6px;
+}
+.leaflet-tooltip-top {
+	margin-top: -6px;
+}
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-top:before {
+	left: 50%;
+	margin-left: -6px;
+	}
+.leaflet-tooltip-top:before {
+	bottom: 0;
+	margin-bottom: -12px;
+	border-top-color: #fff;
+	}
+.leaflet-tooltip-bottom:before {
+	top: 0;
+	margin-top: -12px;
+	margin-left: -6px;
+	border-bottom-color: #fff;
+	}
+.leaflet-tooltip-left {
+	margin-left: -6px;
+}
+.leaflet-tooltip-right {
+	margin-left: 6px;
+}
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	top: 50%;
+	margin-top: -6px;
+	}
+.leaflet-tooltip-left:before {
+	right: 0;
+	margin-right: -12px;
+	border-left-color: #fff;
+	}
+.leaflet-tooltip-right:before {
+	left: 0;
+	margin-left: -12px;
+	border-right-color: #fff;
+	}
+
+/* Printing */
+
+@media print {
+	/* Prevent printers from removing background-images of controls. */
+	.leaflet-control {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		}
+	}
+
+/* Layout: storybook pages — full-bleed illustrated trip "pages" stacked in one 760px column, floating glass tab bar, sheets rise from the bottom */
+:root{
+  --bg:#EDF2FB; --paper:#FFFFFF; --ink:#0B1530; --ink2:rgba(11,21,48,.6); --ink3:rgba(11,21,48,.32);
+  --line:rgba(11,21,48,.10); --fill:rgba(29,91,216,.08); --glass:rgba(255,255,255,.72);
+  --blue:#1D5BD8; --blue-2:#3E7BF0; --blue-soft:rgba(29,91,216,.12); --on-blue:#FFFFFF;
+  --amber:#C26A00; --amber-soft:rgba(240,150,20,.16); --green:#178A4C; --green-soft:rgba(23,138,76,.13); --red:#D93636;
+  --k-flight:#1D5BD8; --k-train:#178A4C; --k-transfer:#5C6B8A; --k-ferry:#0E8AA6; --k-stay:#5546D6; --k-activity:#E07B12; --k-dining:#D63A6A; --k-note:#B08900;
+  --land:#E6EAF1; --land-line:#C9D2E2; --water:#CFE0F7;
+  --shadow:0 18px 50px -18px rgba(13,40,110,.35); --shadow-s:0 6px 20px -8px rgba(13,40,110,.28);
+  --serif:"Fraunces","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,"Segoe UI",Roboto,sans-serif;
+  --r:20px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#060A14; --paper:#0F1729; --ink:#EEF3FF; --ink2:rgba(226,234,255,.62); --ink3:rgba(226,234,255,.3);
+  --line:rgba(226,234,255,.10); --fill:rgba(91,140,255,.12); --glass:rgba(15,23,41,.72);
+  --blue:#5B8CFF; --blue-2:#7FA6FF; --blue-soft:rgba(91,140,255,.18); --on-blue:#04122E;
+  --amber:#FFB547; --amber-soft:rgba(255,181,71,.16); --green:#4ED68C; --green-soft:rgba(78,214,140,.15); --red:#FF6B6B;
+  --k-flight:#5B8CFF; --k-train:#4ED68C; --k-transfer:#93A1C0; --k-ferry:#3CC7E0; --k-stay:#8F84FF; --k-activity:#FFA347; --k-dining:#FF6E9A; --k-note:#F2CD4B;
+  --land:#18233A; --land-line:#2A3957; --water:#0B1324;
+  --shadow:0 18px 50px -18px rgba(0,0,0,.8); --shadow-s:0 6px 20px -8px rgba(0,0,0,.7); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#060A14; --paper:#0F1729; --ink:#EEF3FF; --ink2:rgba(226,234,255,.62); --ink3:rgba(226,234,255,.3);
+  --line:rgba(226,234,255,.10); --fill:rgba(91,140,255,.12); --glass:rgba(15,23,41,.72);
+  --blue:#5B8CFF; --blue-2:#7FA6FF; --blue-soft:rgba(91,140,255,.18); --on-blue:#04122E;
+  --amber:#FFB547; --amber-soft:rgba(255,181,71,.16); --green:#4ED68C; --green-soft:rgba(78,214,140,.15); --red:#FF6B6B;
+  --k-flight:#5B8CFF; --k-train:#4ED68C; --k-transfer:#93A1C0; --k-ferry:#3CC7E0; --k-stay:#8F84FF; --k-activity:#FFA347; --k-dining:#FF6E9A; --k-note:#F2CD4B;
+  --land:#18233A; --land-line:#2A3957; --water:#0B1324;
+  --shadow:0 18px 50px -18px rgba(0,0,0,.8); --shadow-s:0 6px 20px -8px rgba(0,0,0,.7); color-scheme:dark }
+
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--sans);font-size:16px;line-height:1.4;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:8px 120px}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+a{color:var(--blue)}
+:focus-visible{outline:2.5px solid var(--blue);outline-offset:2px;border-radius:10px}
+.tnum{font-variant-numeric:tabular-nums}
+.serif{font-family:var(--serif);font-optical-sizing:auto}
+svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* page header */
+.ph{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:18px 2px 6px}
+.ph h1{font-family:var(--serif);font-weight:800;font-size:clamp(36px,9vw,48px);letter-spacing:-.02em;line-height:1;margin:0;text-wrap:balance}
+.ph .lede{color:var(--ink2);font-size:15px;margin-top:8px}
+.round{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--blue);color:var(--on-blue);box-shadow:var(--shadow-s);flex:none;transition:transform .2s}
+.round:active{transform:scale(.92)}
+.round.ghost{background:var(--paper);color:var(--blue)}
+.ph .btns{display:flex;gap:10px}
+
+/* illustrated trip pages */
+.art{position:absolute;inset:0;overflow:hidden}
+.art svg.scene,.art img{width:100%;height:100%;display:block;object-fit:cover}
+.page{position:relative;display:block;width:100%;text-align:left;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);background:var(--paper);isolation:isolate;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.page:active{transform:scale(.985)}
+@media (hover:hover){.page:hover{transform:translateY(-3px)}}
+.page .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,12,34,0) 35%,rgba(4,12,34,.72) 100%)}
+.page .cap{position:absolute;left:0;right:0;bottom:0;padding:18px 20px 18px;color:#fff;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.page .cap .nm{font-family:var(--serif);font-weight:700;font-size:26px;line-height:1.08;letter-spacing:-.01em;text-wrap:balance;text-shadow:0 2px 18px rgba(0,0,0,.35)}
+.page .cap .dt{font-size:14px;opacity:.88;margin-top:6px}
+.page.hero{height:min(62vh,460px)}
+.page.hero .cap .nm{font-size:clamp(30px,8vw,42px)}
+.page.std{height:210px}
+.page.small{height:150px}
+.page.small .cap{padding:12px 14px}
+.page.small .cap .nm{font-size:18px}
+.page.small .art{filter:saturate(.75)}
+.stack{display:grid;gap:16px;margin-top:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+@media (max-width:380px){.grid2{grid-template-columns:1fr}}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:13px;font-weight:600;background:rgba(255,255,255,.2);color:#fff;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);white-space:nowrap;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.chip.solid{background:#fff;color:#0B1530;box-shadow:none}
+.toprow{position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.sec{font-family:var(--serif);font-weight:650;font-size:22px;margin:34px 2px 4px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.sec .aux{font-family:var(--sans);font-size:14px;font-weight:500;color:var(--ink2)}
+
+/* ring */
+.ring{--p:0;width:46px;height:46px;flex:none;position:relative}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:5}
+.ring .tr{stroke:rgba(255,255,255,.28)}
+.ring .pr{stroke:#fff;stroke-linecap:round;stroke-dasharray:113.1;stroke-dashoffset:calc(113.1 - 113.1*var(--p));transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1)}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:12px;font-weight:700}
+.ring.ink .tr{stroke:var(--blue-soft)} .ring.ink .pr{stroke:var(--blue)}
+
+/* trip detail */
+.hero-wrap{position:relative;margin-inline:-16px;margin-top:-8px;height:min(56vh,440px);overflow:hidden}
+@media (min-width:792px){.hero-wrap{margin-inline:0;border-radius:0 0 28px 28px}}
+.hero-wrap .art{transform-origin:50% 100%;will-change:transform}
+.hero-wrap .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,12,34,.28) 0%,rgba(4,12,34,0) 26%,rgba(4,12,34,0) 46%,rgba(4,12,34,.78) 100%)}
+.hero-wrap .cap{position:absolute;left:20px;right:20px;bottom:22px;color:#fff}
+.hero-wrap h1{font-family:var(--serif);font-weight:800;font-size:clamp(32px,8.5vw,48px);line-height:1.02;letter-spacing:-.02em;margin:0;text-wrap:balance;text-shadow:0 2px 24px rgba(0,0,0,.35)}
+.hero-wrap .dt{margin-top:8px;font-size:15px;opacity:.9}
+.glassbtn{height:40px;min-width:40px;padding:0 12px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;gap:6px;color:#fff;background:rgba(10,20,45,.32);-webkit-backdrop-filter:blur(16px) saturate(160%);backdrop-filter:blur(16px) saturate(160%);font-weight:600;font-size:15px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+.glassbtn .i{width:18px;height:18px}
+.hero-wrap .toprow{top:calc(12px + env(safe-area-inset-top,0px))}
+.hero-wrap .toprow .r{display:flex;gap:8px}
+
+.summary{display:flex;align-items:center;gap:14px;background:var(--paper);border-radius:var(--r);padding:14px 16px;margin-top:-28px;position:relative;z-index:2;box-shadow:var(--shadow-s)}
+.summary .txt{flex:1;min-width:0}
+.summary .big{font-weight:700;font-size:16px}
+.summary .sm{font-size:13px;color:var(--ink2);margin-top:2px}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.fact{background:var(--paper);border-radius:14px;padding:8px 12px;font-size:13px;color:var(--ink2);display:flex;align-items:baseline;gap:5px}
+.fact b{font-size:17px;color:var(--ink)}
+.fact.warn b{color:var(--amber)}
+.actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:46px;padding:0 18px;border-radius:14px;font-weight:650;font-size:16px;background:var(--blue);color:var(--on-blue);transition:transform .15s,opacity .2s;box-shadow:var(--shadow-s)}
+.btn:active{transform:scale(.97)}
+.btn.soft{background:var(--blue-soft);color:var(--blue);box-shadow:none}
+.btn.danger{background:rgba(217,54,54,.1);color:var(--red);box-shadow:none}
+.btn.block{width:100%}
+.btn.sm{height:34px;padding:0 12px;border-radius:10px;font-size:14px}
+.btn:disabled{opacity:.45;cursor:default}
+.note-banner{background:var(--blue-soft);color:var(--ink);border-radius:16px;padding:12px 14px;font-size:14px;margin-top:14px;display:flex;gap:10px;align-items:flex-start}
+.note-banner .i{color:var(--blue);margin-top:1px}
+
+/* day pages */
+.day{margin-top:26px}
+.dayband{position:relative;height:84px;border-radius:18px 18px 0 0;overflow:hidden}
+.dayband .scrim{position:absolute;inset:0;background:linear-gradient(90deg,rgba(4,12,34,.62),rgba(4,12,34,.05) 70%)}
+.dayband .lbl{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#fff}
+.dayband .d1{font-family:var(--serif);font-weight:700;font-size:21px;line-height:1.1}
+.dayband .d2{font-size:13px;opacity:.88;margin-top:3px}
+.dayband .today{position:absolute;right:12px;top:12px}
+.daybody{background:var(--paper);border-radius:0 0 18px 18px;box-shadow:var(--shadow-s);overflow:hidden}
+.night{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2);padding:9px 16px;border-top:1px solid var(--line);background:var(--fill)}
+.night .i{width:15px;height:15px;color:var(--blue)}
+
+.row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 16px;min-height:52px;position:relative}
+.row+.row::before{content:"";position:absolute;top:0;right:0;left:62px;border-top:1px solid var(--line)}
+button.row:active{background:var(--fill)}
+@media (hover:hover){button.row:hover{background:var(--fill)}}
+.row .body{flex:1;min-width:0}
+.row .t{font-weight:600;font-size:16px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .s{font-size:14px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.row .muted{color:var(--ink2);font-weight:500}
+.ico{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;color:#fff;box-shadow:0 4px 10px -4px currentColor}
+.ico .i{width:18px;height:18px;color:#fff}
+.ico.ghost{background:var(--fill)!important;box-shadow:none}
+.ico.ghost .i{color:var(--ink3)}
+.times{text-align:right;flex:none;font-size:14px;line-height:1.35}
+.times .a{font-weight:600}
+.times .b{color:var(--ink2)}
+.times sup{font-size:10px;margin-left:1px}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:999px;margin-right:5px;vertical-align:1px;text-transform:uppercase}
+.tag.tbd{background:var(--amber-soft);color:var(--amber)}
+.tag.hold{background:rgba(120,120,120,.16);color:var(--ink2)}
+.btnrow{display:flex;gap:6px;flex-shrink:0}
+.tag.gm{background:var(--blue-soft);color:var(--blue)}
+.tag.cost{background:var(--green-soft);color:var(--green)}
+
+/* generic cards / lists */
+.card{background:var(--paper);border-radius:var(--r);box-shadow:var(--shadow-s);overflow:hidden}
+.card+.card{margin-top:12px}
+.empty{text-align:center;padding:40px 20px}
+.empty h2{font-family:var(--serif);font-size:26px;margin:16px 0 6px}
+.empty p{color:var(--ink2);margin:0 auto 20px;max-width:36ch}
+.empty .pic{height:180px;border-radius:24px;overflow:hidden;position:relative;box-shadow:var(--shadow)}
+
+/* chips row */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;margin-inline:-16px;padding-inline:16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.pick{flex:none;display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px 0 4px;border-radius:999px;background:var(--paper);box-shadow:var(--shadow-s);font-weight:600;font-size:14px;white-space:nowrap}
+.pick.np{padding-left:14px}
+.pick .thumb{width:32px;height:32px;border-radius:50%;overflow:hidden;position:relative;flex:none}
+.pick[aria-pressed="true"]{background:var(--blue);color:var(--on-blue)}
+
+/* map */
+.mapcard{position:relative;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);height:min(58vh,480px);background:var(--water)}
+#mapbox{position:absolute;inset:0;background:var(--water);font-family:var(--sans)}
+.leaflet-container{background:var(--water)!important;font:inherit}
+path.land{fill:var(--land);stroke:var(--land-line);stroke-width:.8}
+path.route{stroke:var(--blue);stroke-width:3.5;fill:none;stroke-dasharray:9 9;animation:march 1.2s linear infinite;stroke-linecap:round}
+path.route-glow{stroke:var(--blue);stroke-opacity:.18;stroke-width:12;fill:none;stroke-linecap:round}
+@keyframes march{to{stroke-dashoffset:-18}}
+.pin{display:grid;place-items:center}
+.pin span{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px;border:2.5px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.35);animation:drop .5s cubic-bezier(.2,1.4,.4,1) both;animation-delay:calc(var(--i,0)*70ms)}
+@keyframes drop{from{transform:translateY(-14px) scale(.6)}to{transform:none}}
+.leaflet-popup-content-wrapper{background:var(--paper);color:var(--ink);border-radius:14px;box-shadow:var(--shadow)}
+.leaflet-popup-tip{background:var(--paper)}
+.leaflet-popup-content{margin:12px 14px;font-size:14px;line-height:1.4}
+.leaflet-popup-content b{font-size:15px}
+.leaflet-control-zoom a{background:var(--paper)!important;color:var(--ink)!important;border-color:var(--line)!important}
+.mapnote{position:absolute;left:12px;right:12px;bottom:12px;z-index:500;display:flex;gap:10px;align-items:center;background:var(--glass);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-radius:14px;padding:10px 12px;font-size:14px;box-shadow:var(--shadow-s)}
+.mapnote .tx{flex:1;min-width:0}
+.stop-n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px;flex:none}
+.credit{font-size:11px;color:var(--ink3);margin:6px 4px 0;text-align:right}
+
+/* expenses */
+.bignum{font-family:var(--serif);font-weight:800;font-size:40px;letter-spacing:-.02em;line-height:1.05}
+.bars{display:grid;gap:12px;padding:16px}
+.bar .top{display:flex;justify-content:space-between;font-size:15px;margin-bottom:6px;gap:8px}
+.bar .top b{font-weight:650}
+.bar .track{height:10px;border-radius:999px;background:var(--fill);overflow:hidden}
+.bar .fillr{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--blue),var(--blue-2));width:var(--w);animation:grow 1s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{width:4%}}
+.who{display:inline-flex;margin-left:6px;vertical-align:middle}
+.av{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;margin-left:-5px;border:2px solid var(--paper)}
+.av:first-child{margin-left:0}
+
+/* inbox */
+.mail{padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.mail+.mail{border-top:1px solid var(--line)}
+.mail .body{flex:1;min-width:0}
+.mail .k{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--blue)}
+.mail .t{font-weight:650;margin-top:2px}
+.mail .s{font-size:14px;color:var(--ink2);margin-top:3px;overflow-wrap:anywhere}
+.mail .src{font-size:12px;color:var(--ink3);margin-top:6px;overflow-wrap:anywhere}
+.mail .acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.mail.done{opacity:.6}
+
+/* tab bar */
+.tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;gap:2px;padding:6px;border-radius:999px;background:var(--glass);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);box-shadow:var(--shadow),inset 0 0 0 1px var(--line);max-width:calc(100% - 24px)}
+.tab{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:62px;padding:7px 8px 6px;border-radius:999px;font-size:10.5px;font-weight:650;color:var(--ink2);transition:color .25s,background .3s}
+.tab .i{width:22px;height:22px}
+.tab[aria-current="page"]{color:var(--blue);background:var(--blue-soft)}
+.tab .dot{position:absolute;top:3px;right:14px;min-width:16px;height:16px;border-radius:999px;background:var(--red);color:#fff;font-size:10px;display:grid;place-items:center;padding:0 4px}
+@media (max-width:380px){.tab{min-width:54px;padding-inline:4px}}
+
+/* sheets */
+.scrimx{position:fixed;inset:0;background:rgba(3,10,30,.42);z-index:40;opacity:0;transition:opacity .3s}
+.scrimx.on{opacity:1}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-height:92%;display:flex;flex-direction:column;background:var(--bg);border-radius:24px 24px 0 0;box-shadow:var(--shadow);transform:translateY(100%);transition:transform .42s cubic-bezier(.32,.72,0,1);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet.on{transform:none}
+@media (min-width:800px){.sheet{left:50%;right:auto;width:640px;bottom:auto;top:50%;max-height:88%;border-radius:24px;transform:translate(-50%,-44%) scale(.97);opacity:0;transition:transform .3s,opacity .3s}.sheet.on{transform:translate(-50%,-50%);opacity:1}}
+.grab{width:38px;height:5px;border-radius:3px;background:var(--ink3);margin:8px auto 0;flex:none}
+@media (min-width:800px){.grab{display:none}}
+.shead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;flex:none;min-height:50px}
+.shead .ttl{font-weight:700;font-size:17px;flex:1;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shead .tb{color:var(--blue);font-size:16px;padding:10px 8px;border-radius:10px;min-width:64px}
+.shead .tb.r{text-align:right;font-weight:700}
+.scontent{overflow-y:auto;padding:4px 16px 28px;-webkit-overflow-scrolling:touch}
+.slbl{font-size:13px;font-weight:650;color:var(--ink2);margin:20px 4px 7px;text-transform:uppercase;letter-spacing:.05em}
+.fields{background:var(--paper);border-radius:16px;overflow:hidden}
+.f{display:flex;align-items:center;gap:12px;padding:0 16px;min-height:48px;position:relative}
+.f+.f::before{content:"";position:absolute;top:0;right:0;left:16px;border-top:1px solid var(--line)}
+.f>label{flex:none;width:100px;font-size:16px}
+.f input,.f select,.f textarea{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:16px;color:var(--ink);padding:12px 0;text-align:right}
+.f input::placeholder,.f textarea::placeholder{color:var(--ink3)}
+.f input:focus-visible,.f textarea:focus-visible,.f select:focus-visible{outline:none;box-shadow:inset 0 -2px 0 var(--blue);border-radius:0}
+.f select{appearance:none;-webkit-appearance:none;color:var(--ink2);cursor:pointer;text-align-last:right}
+.f.stack{flex-direction:column;align-items:stretch;padding:10px 16px}
+.f.stack textarea{text-align:left;min-height:96px;resize:vertical;padding:4px 0}
+.f .pair{flex:1;display:flex;gap:8px;justify-content:flex-end;min-width:0;flex-wrap:wrap}
+.f .pair input{flex:0 1 auto;text-align:center;background:var(--fill);border-radius:9px;padding:7px 8px;max-width:150px}
+.f .money{flex:1;display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.f .money input{max-width:130px}
+.f .money select{flex:0 0 auto;max-width:90px;color:var(--ink)}
+.switch{position:relative;width:51px;height:31px;flex:none;margin-left:auto}
+.switch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.switch span{position:absolute;inset:0;background:var(--fill);border-radius:999px;transition:background .2s;pointer-events:none;box-shadow:inset 0 0 0 1px var(--line)}
+.switch span::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.18);transition:transform .25s cubic-bezier(.3,1.4,.5,1)}
+.switch input:checked+span{background:var(--blue)}
+.switch input:checked+span::after{transform:translateX(20px)}
+.switch input:focus-visible+span{outline:2.5px solid var(--blue);outline-offset:2px}
+.kinds{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+.kind{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:14px;background:var(--paper);font-size:12px;font-weight:600;color:var(--ink2);transition:transform .15s}
+.kind:active{transform:scale(.95)}
+.kind[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--blue);color:var(--ink)}
+.people{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px}
+.person{height:34px;padding:0 13px;border-radius:999px;background:var(--fill);font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.person[aria-pressed="true"]{background:var(--blue);color:var(--on-blue)}
+.person.add{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line);color:var(--blue)}
+.hint{font-size:13px;color:var(--ink2);padding:7px 4px 0}
+.dhead{display:flex;gap:14px;align-items:center;padding:6px 0 4px}
+.dhead .ico{width:54px;height:54px;border-radius:16px}
+.dhead .ico .i{width:26px;height:26px}
+.dhead h2{font-family:var(--serif);font-size:24px;font-weight:700;margin:0;line-height:1.15;text-wrap:balance}
+.kv .row{align-items:flex-start;min-height:46px}
+.kv .row::before{left:16px!important}
+.kv .k{color:var(--ink2);font-size:14px;width:104px;flex:none;padding-top:2px}
+.kv .v{flex:1;min-width:0;font-size:16px;overflow-wrap:anywhere}
+.notes{white-space:pre-wrap;font-size:15px;line-height:1.5;padding:12px 16px;overflow-wrap:anywhere}
+.route{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:18px 16px}
+.route .end{min-width:0}.route .end.r{text-align:right}
+.route .code{font-family:var(--serif);font-size:30px;font-weight:800;line-height:1.05;overflow-wrap:anywhere}
+.route .when{font-size:14px;color:var(--ink2);margin-top:3px}
+.route .tz{font-size:12px;color:var(--ink3)}
+.route .mid{color:var(--blue)}
+.confirm{display:flex;gap:10px;margin-top:10px}.confirm .btn{flex:1}
+.copyline{display:flex;gap:8px;align-items:center;padding:12px 16px}
+.copyline code{flex:1;min-width:0;font-size:14px;overflow-wrap:anywhere;user-select:all}
+.photo-prev{height:150px;border-radius:14px;overflow:hidden;position:relative;margin:12px 16px}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);background:var(--ink);color:var(--bg);border-radius:999px;padding:10px 18px;font-size:14px;font-weight:600;opacity:0;transition:all .3s cubic-bezier(.2,.8,.2,1);z-index:60;max-width:calc(100% - 32px);text-align:center;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.spinner{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--blue-soft);border-top-color:var(--blue);animation:spin .8s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+
+.leaflet-tooltip.lbl{background:var(--paper);color:var(--ink);border:0;box-shadow:var(--shadow-s);font:600 12px/1.2 var(--sans);padding:4px 8px;border-radius:8px;white-space:nowrap}
+.leaflet-tooltip.lbl::before{display:none}
+.dayhero{position:relative;height:150px;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.dayhero .scrim{position:absolute;inset:0;background:linear-gradient(90deg,rgba(4,12,34,.7),rgba(4,12,34,.1) 75%)}
+.dayhero .lbl{position:absolute;left:18px;top:18px;right:18px;color:#fff}
+.dayhero .d1{font-family:var(--serif);font-weight:750;font-size:26px;line-height:1.1}
+.dayhero .d2{font-size:14px;opacity:.9;margin-top:4px}
+.gmbtn{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:16px;background:var(--blue);color:var(--on-blue);font-weight:700;font-size:17px;text-decoration:none;margin-top:12px;box-shadow:var(--shadow-s);transition:transform .15s}
+.gmbtn:active{transform:scale(.98)}
+.rt{padding:6px 0}
+.stop{display:flex;align-items:center;gap:12px;padding:10px 16px;position:relative}
+.stop .body{flex:1;min-width:0}
+.stop .t{font-weight:650;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stop .s{font-size:13px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.stop .go{font-size:14px;font-weight:650;color:var(--blue);text-decoration:none;padding:8px 4px;flex:none}
+.leg{display:flex;align-items:center;gap:12px;padding:0 16px;min-height:34px}
+.leg .rail{width:28px;display:flex;justify-content:center;align-self:stretch;flex:none}
+.leg .rail i{display:block;width:0;border-left:2.5px dashed var(--blue);opacity:.55;animation:railm 1.4s linear infinite}
+.leg .info{font-size:13px;color:var(--ink2);display:flex;align-items:center;gap:6px}
+.leg .info .i{width:15px;height:15px;color:var(--blue)}
+@keyframes railm{from{opacity:.35}50%{opacity:.75}to{opacity:.35}}
+
+
+.tag.tent{background:rgba(85,70,214,.14);color:var(--k-stay)}
+.seg{display:flex;background:var(--fill);border-radius:11px;padding:3px;gap:2px;flex:1;max-width:330px;margin-left:auto}
+.seg button{flex:1;height:34px;border-radius:9px;font-size:14px;font-weight:600;color:var(--ink2);transition:background .2s,color .2s;white-space:nowrap;padding:0 6px}
+.seg button[aria-pressed="true"]{background:var(--paper);color:var(--ink);box-shadow:0 2px 6px -2px rgba(0,0,0,.25)}
+.btn.ghost{background:transparent;color:var(--ink2);box-shadow:inset 0 0 0 1.5px var(--line)}
+.thumb svg,.thumb img,.tthumb svg,.tthumb img{width:100%;height:100%;display:block;object-fit:cover}
+.tthumb{width:44px;height:44px;border-radius:12px;overflow:hidden;position:relative;flex:none}
+.routecard{position:relative;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);background:var(--paper)}
+.routecard svg{display:block;width:100%;height:auto}
+.rm-bg{fill:var(--land)}
+.rm-grid{stroke:var(--land-line);stroke-width:.6;opacity:.45}
+.rm-road{fill:none;stroke:var(--paper);stroke-width:4;opacity:.45}
+.rm-blob{fill:var(--water);opacity:.7}
+.rm-park{fill:var(--green-soft)}
+.rm-path{fill:none;stroke:var(--blue);stroke-width:3.4;stroke-linecap:round;stroke-dasharray:8 8;animation:march 1.2s linear infinite}
+.rm-glow{fill:none;stroke:var(--blue);stroke-opacity:.16;stroke-width:13;stroke-linecap:round;stroke-linejoin:round}
+.rm-lbl{font:650 11.5px var(--sans);fill:var(--ink);paint-order:stroke;stroke:var(--land);stroke-width:4px;stroke-linejoin:round}
+.rm-sub{font:500 10px var(--sans);fill:var(--ink2);paint-order:stroke;stroke:var(--land);stroke-width:4px;stroke-linejoin:round}
+.rm-pin{cursor:pointer}
+.rm-pin circle.o{stroke:#fff;stroke-width:2.5;filter:drop-shadow(0 3px 5px rgba(0,0,0,.3))}
+.rm-pin text{font-family:var(--sans);font-weight:700;fill:#fff;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.rm-pin .pop{transform-box:fill-box;transform-origin:center;animation:pop .5s cubic-bezier(.2,1.5,.4,1) both;animation-delay:calc(var(--i)*90ms)}
+.rm-pin:hover circle.o,.rm-pin:focus circle.o{stroke:var(--blue)}
+@keyframes pop{from{transform:scale(0)}to{transform:none}}
+.rm-dot{fill:var(--blue)} .rm-dot2{fill:var(--blue);opacity:.22}
+.rm-cmp{fill:var(--paper);stroke:var(--line)} .rm-cmpb{fill:var(--ink3)}
+.rm-scale{fill:none;stroke:var(--ink2);stroke-width:1.5}
+.rm-hdr{position:absolute;left:16px;top:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;pointer-events:none}
+.rm-hdr .t{font-family:var(--serif);font-weight:750;font-size:22px;line-height:1.1;color:var(--ink)}
+.rm-hdr .s{font-size:13px;color:var(--ink2);margin-top:3px}
+.rm-hdr .chip.solid{box-shadow:var(--shadow-s)}
+.scene .spin{animation:spin 16s linear infinite}
+.scene .fall{animation:fall var(--d,9s) linear infinite;animation-delay:var(--dl,0s)}
+@keyframes fall{from{transform:translate(0,-40px) rotate(0)}to{transform:translate(-40px,190px) rotate(540deg)}}
+@media (min-width:960px){
+  .wrap{max-width:980px}
+  .stack.two{grid-template-columns:1fr 1fr}
+  .grid2{grid-template-columns:repeat(3,1fr)}
+  .page.hero{height:min(58vh,520px)}
+}
+
+/* motion */
+.rise{animation:rise .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*60ms)}
+@keyframes rise{from{transform:translateY(18px) scale(.985);opacity:.35}to{transform:none;opacity:1}}
+.scene .cl{animation:drift var(--d,60s) ease-in-out infinite alternate}
+@keyframes drift{from{transform:translateX(-18px)}to{transform:translateX(22px)}}
+.scene .glow{transform-box:fill-box;transform-origin:center;animation:glow 5s ease-in-out infinite}
+@keyframes glow{50%{transform:scale(1.08);opacity:.8}}
+.scene .tw{animation:tw var(--d,3s) ease-in-out infinite;animation-delay:var(--dl,0s)}
+@keyframes tw{50%{opacity:.25}}
+.scene .wv{animation:wave var(--d,7s) ease-in-out infinite alternate}
+@keyframes wave{from{transform:translateX(-14px)}to{transform:translateX(14px)}}
+.scene .pl{animation:fly var(--d,16s) linear infinite}
+@keyframes fly{from{transform:translateX(-90px) translateY(10px)}to{transform:translateX(500px) translateY(-24px)}}
+.scene .sway{transform-box:fill-box;transform-origin:50% 100%;animation:sway 6s ease-in-out infinite alternate}
+@keyframes sway{from{transform:rotate(-1.6deg)}to{transform:rotate(1.6deg)}}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.32s}
+::view-transition-group(trip-art){animation-duration:.48s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion:reduce){*,::before,::after{animation:none!important;transition:none!important}}
+/* ===== Apple clarity skin — shared design language with Jeric's dashboards ===== */
+:root{
+  --bg:#f5f5f7; --paper:#ffffff; --ink:#1d1d1f; --ink2:#86868b; --ink3:rgba(29,29,31,.28);
+  --line:#e5e5ea; --fill:#f5f5f7; --glass:rgba(245,245,247,.86); --track:#e8e8ed;
+  --blue:#0071e3; --blue-2:#0077ed; --blue-soft:#e8f1fc; --on-blue:#ffffff;
+  --amber:#b25000; --amber-soft:#fff1e0; --green:#248a3d; --green-soft:#e7f4ea; --red:#d70015;
+  --k-flight:#0071e3; --k-train:#248a3d; --k-transfer:#8e8e93; --k-ferry:#30b0c7; --k-stay:#5e5ce6; --k-activity:#f08a00; --k-dining:#e8335f; --k-note:#c9a000;
+  --land:#ececf0; --land-line:#d2d2d7; --water:#dde9f8;
+  --shadow:0 2px 16px rgba(0,0,0,.06); --shadow-s:none;
+  --serif:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Arial,sans-serif;
+  --r:18px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#000000; --paper:#1c1c1e; --ink:#f5f5f7; --ink2:#98989d; --ink3:rgba(245,245,247,.3);
+  --line:#38383a; --fill:#2c2c2e; --glass:rgba(0,0,0,.72); --track:rgba(118,118,128,.24);
+  --blue:#0a84ff; --blue-2:#409cff; --blue-soft:rgba(10,132,255,.18); --on-blue:#ffffff;
+  --amber:#ff9f0a; --amber-soft:rgba(255,159,10,.16); --green:#30d158; --green-soft:rgba(48,209,88,.16); --red:#ff453a;
+  --k-flight:#0a84ff; --k-train:#30d158; --k-transfer:#98989d; --k-ferry:#64d2ff; --k-stay:#7d7aff; --k-activity:#ff9f0a; --k-dining:#ff375f; --k-note:#ffd60a;
+  --land:#1c1c1e; --land-line:#38383a; --water:#0a1626; --shadow:none }}
+:root[data-theme="dark"]{
+  --bg:#000000; --paper:#1c1c1e; --ink:#f5f5f7; --ink2:#98989d; --ink3:rgba(245,245,247,.3);
+  --line:#38383a; --fill:#2c2c2e; --glass:rgba(0,0,0,.72); --track:rgba(118,118,128,.24);
+  --blue:#0a84ff; --blue-2:#409cff; --blue-soft:rgba(10,132,255,.18); --on-blue:#ffffff;
+  --amber:#ff9f0a; --amber-soft:rgba(255,159,10,.16); --green:#30d158; --green-soft:rgba(48,209,88,.16); --red:#ff453a;
+  --k-flight:#0a84ff; --k-train:#30d158; --k-transfer:#98989d; --k-ferry:#64d2ff; --k-stay:#7d7aff; --k-activity:#ff9f0a; --k-dining:#ff375f; --k-note:#ffd60a;
+  --land:#1c1c1e; --land-line:#38383a; --water:#0a1626; --shadow:none }
+
+body{font-size:15px;line-height:1.47;letter-spacing:-.01em;display:flex;flex-direction:column;min-height:100vh}
+.wrap{width:100%;padding-block:4px 64px}
+:focus-visible{outline-color:var(--blue)}
+
+/* segmented control, sticky at the top (replaces the floating bottom bar) */
+.tabbar{order:-1;position:sticky;top:calc(8px + env(safe-area-inset-top,0px));left:auto;bottom:auto;transform:none;align-self:center;margin:8px 16px 0;max-width:calc(100% - 32px);
+  background:var(--track);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-radius:12px;padding:3px;gap:2px;box-shadow:0 0 0 6px var(--glass)}
+.tab{flex-direction:row;gap:6px;min-width:0;padding:7px 14px;border-radius:9px;font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap}
+.tab .i{width:16px;height:16px;opacity:.7}
+.tab:hover{background:rgba(255,255,255,.45)}
+.tab[aria-current="page"]{background:var(--paper);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.tab[aria-current="page"] .i{opacity:1;color:var(--blue)}
+.tab .dot{position:static;margin-left:2px;min-width:16px;height:16px}
+@media (max-width:480px){.tab{padding:7px 9px}.tab .i{display:none}}
+.toast{bottom:calc(24px + env(safe-area-inset-bottom,0px));border-radius:12px}
+
+/* type: one sans family, Apple weights */
+.ph{padding:22px 2px 10px}
+.ph h1{font-family:var(--sans);font-weight:700;font-size:32px;letter-spacing:-.03em;line-height:1.1}
+.ph .lede{font-size:14px;margin-top:6px}
+.sec{font-family:var(--sans);font-weight:600;font-size:20px;letter-spacing:-.02em;margin:30px 2px 10px}
+.sec .aux{font-size:13px;color:var(--ink2)}
+.page .cap .nm,.hero-wrap h1,.dhead h2,.empty h2,.bignum,.rm-hdr .t,.dayhero .d1,.route .code,.dayband .d1{font-family:var(--sans)}
+.page .cap .nm{font-weight:700;letter-spacing:-.02em}
+.hero-wrap h1{font-weight:700;letter-spacing:-.03em}
+.bignum{font-weight:600;font-size:36px;letter-spacing:-.03em}
+.dhead h2{font-weight:600;letter-spacing:-.02em}
+.route .code{font-weight:700;letter-spacing:-.02em}
+
+/* surfaces: flat white panels, 18px radius, no heavy shadows */
+.card,.daybody,.summary,.fact,.routecard,.kv,.fields{box-shadow:none}
+.page,.mapcard,.empty .pic,.dayhero{box-shadow:var(--shadow);border-radius:var(--r)}
+.page:hover{transform:none}
+.fact{border-radius:14px}
+.note-banner{border-radius:14px}
+.hero-wrap{margin:12px 0 0;border-radius:var(--r);height:min(46vh,380px)}
+.hero-wrap .toprow{top:14px}
+.summary{margin-top:12px}
+.ico{border-radius:9px;box-shadow:none}
+.dhead .ico{border-radius:14px}
+
+/* day pages: clean header row instead of illustrated band */
+.day{margin-top:14px}
+.dayband{height:auto;border-radius:var(--r) var(--r) 0 0;background:var(--paper);border-bottom:1px solid var(--line)}
+.dayband .art,.dayband .scrim{display:none}
+.dayband .lbl{position:static;transform:none;color:var(--ink);padding:15px 16px 12px}
+.dayband .d1{font-weight:600;font-size:17px;letter-spacing:-.02em}
+.dayband .d2{color:var(--ink2);opacity:1;font-size:13px}
+.dayband .today{top:13px}
+.daybody{border-radius:0 0 var(--r) var(--r)}
+.night{background:var(--paper);color:var(--ink2)}
+.night .i{color:var(--ink2)}
+
+/* controls */
+.btn{border-radius:980px;font-weight:500;font-size:15px;height:42px;box-shadow:none}
+.btn:hover{background:var(--blue-2)}
+.btn.sm{border-radius:980px;height:32px;font-size:13px;padding:0 14px}
+.btn.soft{background:var(--fill);color:var(--blue)}
+.btn.soft:hover{background:var(--track)}
+.btn.danger{background:#fdecee;color:var(--red)}
+.round{box-shadow:none}
+.gmbtn{border-radius:980px;box-shadow:none;font-weight:600;font-size:16px;height:48px}
+.pick{box-shadow:none;background:transparent;color:var(--ink2);font-weight:500;font-size:13px;height:34px}
+.pick:hover{background:var(--track)}
+.pick[aria-pressed="true"]{background:var(--blue-soft);color:var(--blue)}
+.tag{border-radius:6px;font-size:11px;letter-spacing:0;text-transform:none;font-weight:600;padding:1px 7px}
+.tag.tbd{background:var(--amber-soft);color:var(--amber)}
+.tag.tent{background:rgba(94,92,230,.12);color:var(--k-stay)}
+.tag.cost{background:var(--green-soft);color:var(--green)}
+.tag.gm{background:var(--blue-soft);color:var(--blue)}
+.tag.hold{background:var(--track);color:var(--ink2)}
+.seg{background:var(--track)}
+.person{background:var(--fill)}
+.f input:focus-visible,.f textarea:focus-visible,.f select:focus-visible{box-shadow:inset 0 -2px 0 var(--blue)}
+.sheet{border-radius:18px 18px 0 0}
+@media (min-width:800px){.sheet{border-radius:18px}}
+.shead .ttl{font-weight:600}
+.stop-n,.pin span{font-weight:600}
+.leaflet-tooltip.lbl{border-radius:8px;font-weight:500}
+.bar .top>span:first-child{display:inline-flex;align-items:center;gap:8px}
+.bar .fillr{background:var(--blue)}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .55 0"/>
+    </filter>
+  </defs>
+</svg>
+
+<div class="wrap" id="app"></div>
+<nav class="tabbar" id="tabbar" aria-label="Sections"></nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+(() => {
+"use strict";
+
+/* ======================= icons ======================= */
+const P = {
+  flight:'<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
+  train:'<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10h14M8 21l2-4M16 21l-2-4M9 13.5h.01M15 13.5h.01"/>',
+  transfer:'<path d="M5 17H3v-4.5L5 8h11l3.5 4.5H21V17h-2"/><path d="M9 17h6"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/>',
+  ferry:'<path d="M2 20c2 1.3 4 1.3 6 0s4-1.3 6 0 4 1.3 6 0"/><path d="M4 17 3 11h18l-1 6"/><path d="M8 11V7h8v4M12 7V4"/>',
+  stay:'<path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8M3 16h18"/><path d="M7 10V8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/>',
+  activity:'<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  dining:'<path d="M7 3v18M4 3v5a3 3 0 0 0 6 0V3"/><path d="M18 21V3c-2.2 0-3.5 2.4-3.5 6v4.5H18"/>',
+  note:'<path d="M5 3h10l4 4v14H5z"/><path d="M9 11h6M9 15h6"/>',
+  out:'<path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+  back:'<path d="M15 5l-7 7 7 7"/>',
+  moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  trips:'<path d="M4 7h16v13H4z"/><path d="M9 7V4h6v3M4 12h16"/>',
+  map:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
+  check:'<path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>',
+  wallet:'<path d="M3 7a2 2 0 0 1 2-2h13v4"/><path d="M3 7v11a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2z"/><path d="M16 14.5h.01"/>',
+  inbox:'<path d="M3 13h5l1.5 3h5L16 13h5"/><path d="M5.5 5h13L21 13v6H3v-6z"/>',
+  share:'<path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v7h14v-7"/>',
+  edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  photo:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 8"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  ext:'<path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v6H4V6h6"/>',
+  locate:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/>',
+  walk:'<circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-4 4 1 2 4M11 15l-1-4"/>',
+  copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/>'
+};
+const ic = (k, extra="") => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true" ${extra}>${P[k]}</svg>`;
+
+const KINDS = [["flight","Flight"],["train","Train"],["transfer","Car"],["ferry","Ferry"],["stay","Stay"],["activity","Activity"],["dining","Dining"],["note","Note"]];
+const KL = Object.fromEntries(KINDS);
+const MOVING = new Set(["flight","train","transfer","ferry"]);
+const SPLIT = new Set(["flight","train","ferry"]);
+const CURRENCIES = ["USD","CNY","HKD","MOP","EUR","MAD","BSD","CAD","GBP","JPY"];
+const AVC = ["#1D5BD8","#5546D6","#0E8AA6","#178A4C","#E07B12","#D63A6A","#5C6B8A"];
+
+/* ======================= utils ======================= */
+const h = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/[^A-Za-z0-9-]/g,"");
+const pad = n => String(n).padStart(2,"0");
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const dOf = s => (s||"").slice(0,10), tOf = s => (s||"").slice(11,16);
+const asUTC = d => new Date(d+"T00:00:00Z");
+const dayDiff = (a,b) => Math.round((asUTC(b)-asUTC(a))/864e5);
+const addDays = (d,n) => { const x = asUTC(d); x.setUTCDate(x.getUTCDate()+n); return x.toISOString().slice(0,10); };
+const fmtD = (d,o) => d ? new Intl.DateTimeFormat(undefined,{timeZone:"UTC",...o}).format(asUTC(d)) : "";
+const fmtT = s => tOf(s) ? new Intl.DateTimeFormat(undefined,{timeZone:"UTC",hour:"numeric",minute:"2-digit"}).format(new Date(dOf(s)+"T"+tOf(s)+":00Z")) : "";
+function fmtRange(a,b){
+  if (!a) return "No dates yet";
+  if (!b || a===b) return fmtD(a,{month:"short",day:"numeric",year:"numeric"});
+  const sy = a.slice(0,4)===b.slice(0,4), sm = sy && a.slice(5,7)===b.slice(5,7);
+  if (sm) return `${fmtD(a,{month:"short",day:"numeric"})} – ${fmtD(b,{day:"numeric"})}, ${a.slice(0,4)}`;
+  if (sy) return `${fmtD(a,{month:"short",day:"numeric"})} – ${fmtD(b,{month:"short",day:"numeric"})}, ${a.slice(0,4)}`;
+  return `${fmtD(a,{month:"short",day:"numeric",year:"numeric"})} – ${fmtD(b,{month:"short",day:"numeric",year:"numeric"})}`;
+}
+const tzCity = tz => tz ? tz.split("/").pop().replace(/_/g," ") : "";
+/* USD per-unit rates (units of currency per 1 USD). Pegged or checked Oct 16, 2026; refreshed live when reachable. */
+const FX = {USD:1, MAD:9.7153, CNY:6.6918, HKD:7.80, MOP:8.03, BSD:1};
+let FX_LIVE = false;
+(async () => { try { const r = await fetch("https://open.er-api.com/v6/latest/USD"); const j = await r.json(); if (j && j.rates) { for (const k of Object.keys(j.rates)) FX[k] = j.rates[k]; FX_LIVE = true;  } } catch {} })();
+const toUSD = (n, cur) => { cur = cur || "USD"; return FX[cur] ? n / FX[cur] : null; };
+function moneyUSD(n, cur){ cur = cur || "USD"; if (cur === "USD") return money(n, "USD"); const u = toUSD(n, cur); return u == null ? money(n, cur) : `${money(n, cur)} ≈ ${money(u, "USD")}`; }
+function money(n, cur){ try { return new Intl.NumberFormat(undefined,{style:"currency",currency:cur||"USD",maximumFractionDigits:2}).format(n); } catch { return `${cur||""} ${(+n).toFixed(2)}`; } }
+const LS = { get(k){ try { return localStorage.getItem(k); } catch { return null; } }, set(k,v){ try { v==null ? localStorage.removeItem(k) : localStorage.setItem(k,v); } catch {} } };
+function toast(msg){ const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(()=>t.classList.remove("on"), 2600); }
+const nameOf = p => p === "Me" ? "You" : p;
+const avatar = (p, i) => `<span class="av" style="background:${AVC[i % AVC.length]}" title="${h(nameOf(p))}">${h((nameOf(p)||"?")[0].toUpperCase())}</span>`;
+function hash(s){ let x = 2166136261; for (const c of String(s)) { x ^= c.charCodeAt(0); x = Math.imul(x, 16777619); } return x >>> 0; }
+function rng(seed){ let a = hash(seed); return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* ======================= illustrated scenes ======================= */
+let SID = 0;
+const SCENES = [["","Auto"],["skyline","Skyline"],["city","City"],["canal","Canals"],["bridge","Bay Bridge"],["pastel","Pastel Town"],["oldtown","Old Town"],["beach","Beach"],["desert","Desert"],["tropical","Tropical"],["grassland","Grassland"],["mountain","Mountains"],["home","Home"]];
+function sceneType(text){
+  const s = text || "";
+  if (/^\s*home\b/i.test(s)) return "home";
+  if (/netherlands|holland|amsterdam|rotterdam|utrecht|delft|belgium|bruges|brugge|brussels|ghent|\bgent\b|antwerp|venice|copenhagen/i.test(s)) return "canal";
+  if (/san francisco|golden gate|burlingame|sausalito|\bsfo\b/i.test(s)) return "bridge";
+  if (/charleston|savannah|key west|rainbow row|burano|cinque terre|valpara[ií]so/i.test(s)) return "pastel";
+  if (/montr[eé]al|qu[eé]bec|prague|vienna|budapest|krak[oó]w|edinburgh|salzburg|old town|tallinn/i.test(s)) return "oldtown";
+  if (/xishuangbanna|jinghong|banna|chiang mai|luang prabang|yunnan|ubud/i.test(s)) return "tropical";
+  if (/baotou|inner mongolia|mongolia|hohhot|ordos|prairie|grassland/i.test(s)) return "grassland";
+  if (/bahamas|nassau|baha mar|beach|island|hawaii|maui|maldives|cancun|phuket|caribbean|miami|tulum|punta cana|aruba|bali/i.test(s)) return "beach";
+  if (/morocco|marrakech|sahara|desert|agafay|\bfes\b|casablanca|egypt|cairo|jordan|petra|arizona|sedona/i.test(s)) return "desert";
+  if (/alps|mountain|swiss|switzerland|banff|nepal|patagonia|iceland|norway|national park|tibet|aspen|zermatt/i.test(s)) return "mountain";
+  if (/new york|\bnyc\b|manhattan|brooklyn|hong kong|macau|macao|shanghai|shenzhen|tokyo|singapore|chicago|dubai|seoul|taipei|bangkok|kuala lumpur/i.test(s)) return "skyline";
+  return "city";
+}
+function sky(r, type){
+  const pals = {
+    beach:[["#3FA9F5","#9ED8FF","#FFE6B8"],["#2F7FE0","#7CC7FF","#FFD9A0"],["#F08A6A","#F7B996","#FFE2B8"]],
+    desert:[["#E9734F","#F6A86B","#FDE0A2"],["#3B3A8F","#C2617B","#F7B57B"],["#F08C5A","#F9C07E","#FFF0C4"]],
+    mountain:[["#2E6BD6","#86B6F5","#E3F0FF"],["#2A2E7A","#7A6FC4","#F5B9A5"],["#3E80E8","#A9CFFF","#F4F8FF"]],
+    city:[["#0B1D5C","#2753C6","#7FA9F2"],["#16205E","#5A4CB0","#F09A7B"],["#3E80E8","#9CC8F7","#EAF4FF"],["#E9876A","#F4B993","#FDE3C3"]],
+    skyline:[["#2A1B5C","#B0397A","#F59B6A"],["#0B1030","#3B2A7A","#E05D8B"],["#F0876A","#F6B58C","#FFDDB6"],["#14183F","#2E3A8C","#6E86D8"]],
+    canal:[["#F59E72","#F9C59C","#FDE9CF"],["#7B9BE0","#C3D2F2","#F8DCC8"],["#E9788C","#F4AE92","#FCE4BC"]],
+    bridge:[["#F2946A","#F7BE8E","#FFE6C4"],["#8DB3E6","#CADCF2","#F5E7D9"],["#5B4E9C","#D07C8A","#F7C79A"]],
+    pastel:[["#54A9EE","#A3D3F8","#EAF6FF"],["#F49C7A","#F8C6A0","#FFF0D8"]],
+    oldtown:[["#EE9B52","#F5C584","#FBE6C0"],["#6B78C4","#C59FBF","#F6D3AE"]],
+    tropical:[["#5DBFC2","#ADE3CF","#F6F2CD"],["#F09A55","#F5C989","#FFF1CB"]],
+    grassland:[["#3C7DE0","#8FC3F6","#EAF5FF"],["#EE8A58","#F5B788","#FFE6C0"],["#2B2F72","#9A6FB0","#F6B994"]],
+    home:[["#050B26","#14256B","#36508F"],["#1B1446","#5A3C8F","#E08B7B"]],
+    sky:[["#2E7CF0","#8CC2FF","#E8F3FF"],["#1B3F9E","#6C8EE6","#FFC9A6"],["#F08A6A","#F7B996","#FFE7CC"]]
+  }[type] || [["#3E80E8","#9CC8F7","#EAF4FF"]];
+  return pals[Math.floor(r()*pals.length)];
+}
+const lum = hex => { const n = parseInt(hex.slice(1),16); return (0.2126*((n>>16)&255) + 0.7152*((n>>8)&255) + 0.0722*(n&255))/255; };
+function cloud(x,y,s,op,d){ return `<g class="cl" style="--d:${d}s"><g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(2)})" fill="#fff" opacity="${op}"><ellipse cx="0" cy="0" rx="34" ry="11"/><ellipse cx="-14" cy="-7" rx="16" ry="12"/><ellipse cx="10" cy="-10" rx="20" ry="15"/></g></g>`; }
+function ridge(r, base, amp, n, w=400){
+  let d = `M0 ${base}`; const step = w/n;
+  for (let i=1;i<=n;i++){ const x = i*step, py = base - r()*amp; const cx = x - step/2; d += ` Q${cx.toFixed(1)} ${(py - amp*0.35*r()).toFixed(1)} ${x.toFixed(1)} ${py.toFixed(1)}`; }
+  return d + ` L${w} 260 L0 260Z`;
+}
+const f1 = n => n.toFixed(1);
+const waves = (r, y0, n, step, op, col="#fff") => { let s = ""; for (let i=0;i<n;i++){ const y = y0 + i*step; s += `<path class="wv" style="--d:${(5+r()*5).toFixed(1)}s" d="M-20 ${f1(y)} q20 -4 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0" stroke="${col}" stroke-opacity="${(op+i*.03).toFixed(2)}" stroke-width="1.5" fill="none"/>`; } return s; };
+function palm(px, py, h, flip, col="#1F5A33", trunk="#3B2A1A"){
+  const tx = px + 14*flip, ty = py - h;
+  return `<g class="sway"><path d="M${px} ${py} C${px-6*flip} ${py-h*.3} ${px-2*flip} ${py-h*.7} ${tx} ${ty}" stroke="${trunk}" stroke-width="5" fill="none" stroke-linecap="round"/>${[[-40,-6],[-30,14],[10,18],[34,4],[22,-16],[-12,-20]].map(([dx,dy])=>`<path d="M${tx} ${ty} q${dx*.5} ${dy-14} ${dx} ${dy}" stroke="${col}" stroke-width="7" fill="none" stroke-linecap="round"/>`).join("")}</g>`;
+}
+function towers(r, night, opts){
+  const back = opts.back, front = opts.front, water = opts.water, lit = night ? .5 : .12, tall = opts.tall || 90;
+  let g = "", x = -4;
+  while (x < 404){ const w = 14 + r()*22, hh = 30 + r()*60; g += `<rect x="${f1(x)}" y="${f1(196-hh)}" width="${f1(w)}" height="${f1(hh)}" fill="${back}" opacity=".75"/>`; x += w + 1; }
+  x = -6;
+  while (x < 406){
+    const w = 18 + r()*28, hh = 40 + r()*tall, top = 214 - hh;
+    g += `<rect x="${f1(x)}" y="${f1(top)}" width="${f1(w)}" height="${f1(hh)}" fill="${front}"/>`;
+    if (r() > .78) g += `<path d="M${f1(x+w/2)} ${f1(top-18)} l2 18 l-4 0z" fill="${front}"/>`;
+    for (let wy = top + 6; wy < 208; wy += 8) for (let wx = x + 4; wx < x + w - 5; wx += 6) if (r() < lit) g += `<rect class="${r()>.85?"tw":""}" style="--d:${(3+r()*5).toFixed(1)}s;--dl:-${(r()*5).toFixed(1)}s" x="${f1(wx)}" y="${f1(wy)}" width="2.6" height="3.4" fill="#FFD27A"/>`;
+    x += w + 2;
+  }
+  g += `<rect y="214" width="400" height="46" fill="${water}"/>`;
+  for (let i=0;i<14;i++) g += `<rect class="wv" style="--d:${(4+r()*4).toFixed(1)}s" x="${f1(r()*380)}" y="${f1(220+r()*36)}" width="${f1(10+r()*30)}" height="1.4" fill="${night?"#FFD27A":"#fff"}" opacity="${(.2+r()*.35).toFixed(2)}"/>`;
+  return g;
+}
+function scene(seed, type, opts={}){
+  const r = rng(seed + type), id = "s" + (++SID), c = sky(r, type);
+  const night = type === "home" || ((type === "city" || type === "skyline") && lum(c[1]) < 0.26);
+  let g = `<defs><linearGradient id="${id}k" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c[0]}"/><stop offset=".62" stop-color="${c[1]}"/><stop offset="1" stop-color="${c[2]}"/></linearGradient>
+    <radialGradient id="${id}s"><stop offset="0" stop-color="#FFF8E1"/><stop offset=".45" stop-color="#FFE3A3" stop-opacity=".9"/><stop offset="1" stop-color="#FFE3A3" stop-opacity="0"/></radialGradient>
+    <linearGradient id="${id}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1A9BD0"/><stop offset="1" stop-color="#0A5F96"/></linearGradient>
+    <clipPath id="${id}c"><rect y="208" width="400" height="52"/></clipPath></defs>
+    <rect width="400" height="260" fill="url(#${id}k)"/>`;
+  const sx = 70 + r()*260, sy = 50 + r()*60;
+  if (night) {
+    for (let i=0;i<46;i++) g += `<circle class="tw" style="--d:${(2+r()*4).toFixed(1)}s;--dl:-${(r()*4).toFixed(1)}s" cx="${f1(r()*400)}" cy="${f1(r()*150)}" r="${(r()*1.3+.3).toFixed(2)}" fill="#fff" opacity="${(.4+r()*.6).toFixed(2)}"/>`;
+    g += `<circle class="glow" cx="${f1(sx)}" cy="${f1(sy)}" r="34" fill="url(#${id}s)" opacity=".55"/><circle cx="${f1(sx)}" cy="${f1(sy)}" r="13" fill="#FFF4D6"/><circle cx="${f1(sx+6)}" cy="${f1(sy-4)}" r="12" fill="${c[0]}" opacity=".9"/>`;
+  } else {
+    g += `<circle class="glow" cx="${f1(sx)}" cy="${f1(sy+20)}" r="70" fill="url(#${id}s)"/><circle cx="${f1(sx)}" cy="${f1(sy+20)}" r="${type==="desert"?26:20}" fill="#FFF6DA" opacity=".95"/>`;
+    for (let i=0;i<3+r()*3;i++) g += cloud(r()*400, 30 + r()*80, .6 + r()*.9, (.55+r()*.35).toFixed(2), 40 + Math.round(r()*50));
+  }
+  if (type === "beach") {
+    g += `<path d="M0 168 L400 168 L400 260 L0 260Z" fill="url(#${id}w)"/>` + waves(r, 176, 7, 9, .12);
+    g += `<path d="M0 222 Q120 206 230 220 T400 214 L400 260 L0 260Z" fill="#F4DDB0"/><path d="M0 232 Q140 220 260 232 T400 228 L400 260 L0 260Z" fill="#EBCB92"/>`;
+    const px = r() > .5 ? 330 : 64; g += palm(px, 236, 118, px > 200 ? 1 : -1);
+    g += `<g class="cl" style="--d:30s"><path d="M${f1(150+r()*80)} 160 l18 0 l-3 6 l-12 0z" fill="#fff"/><path d="M${f1(158+r()*80)} 158 l0 -22 l12 20z" fill="#fff" opacity=".95"/></g>`;
+  } else if (type === "desert") {
+    g += `<path d="${ridge(r,190,26,4)}" fill="#E39A5E" opacity=".75"/><path d="${ridge(r,214,30,3)}" fill="#C9763F"/><path d="${ridge(r,238,22,3)}" fill="#A9582D"/>`;
+    for (let i=0;i<4;i++) g += `<path d="M${f1(40+r()*320)} ${f1(50+r()*50)} q5 -5 10 0 q5 -5 10 0" stroke="#5A2A1A" stroke-width="1.6" fill="none" opacity=".55" class="cl" style="--d:${(20+r()*20).toFixed(0)}s"/>`;
+    const cx = 90 + r()*200;
+    g += `<g fill="#4A2416" opacity=".9"><path transform="translate(${f1(cx)} 222) scale(1.05)" d="M4 0 L5 -14 Q2 -16 3 -20 Q5 -26 11 -27 Q14 -35 19 -28 Q22 -27 24 -28 Q28 -36 32 -27 Q34 -24 34 -20 L38 -27 Q40 -32 45 -31 L47 -29 L43 -28 L39 -18 L37 -14 L38 0 L35.5 0 L35 -12 L31 -13 L30 0 L27.5 0 L27 -13 L13 -13 L12 0 L9.5 0 L9 -12 L7 0 Z"/><path transform="translate(${f1(cx+56)} 225) scale(.9)" d="M4 0 L5 -14 Q2 -16 3 -20 Q5 -26 11 -27 Q14 -35 19 -28 Q22 -27 24 -28 Q28 -36 32 -27 Q34 -24 34 -20 L38 -27 Q40 -32 45 -31 L47 -29 L43 -28 L39 -18 L37 -14 L38 0 L35.5 0 L35 -12 L31 -13 L30 0 L27.5 0 L27 -13 L13 -13 L12 0 L9.5 0 L9 -12 L7 0 Z"/></g>`;
+  } else if (type === "mountain") {
+    g += `<path d="${ridge(r,150,70,5)}" fill="#7C9CE0" opacity=".55"/><path d="${ridge(r,180,60,4)}" fill="#4B6CBF" opacity=".85"/>`;
+    g += `<rect y="160" width="400" height="40" fill="#fff" opacity=".18" class="cl" style="--d:50s"/><path d="${ridge(r,214,40,5)}" fill="#22407F"/>`;
+    for (let i=0;i<18;i++){ const x = r()*400, hgt = 18 + r()*26, y = 236 + r()*20; g += `<path d="M${f1(x)} ${f1(y-hgt)} l${f1(hgt*.32)} ${f1(hgt)} l-${f1(hgt*.64)} 0z" fill="#0F2A57"/>`; }
+    g += `<rect y="246" width="400" height="14" fill="#0F2A57"/>`;
+  } else if (type === "home") {
+    g += `<path d="${ridge(r,210,26,3)}" fill="#1B2D66"/><path d="${ridge(r,232,18,3)}" fill="#101C45"/>`;
+    const hx = 150 + r()*90;
+    g += `<g><rect x="${f1(hx)}" y="196" width="64" height="40" fill="#0A1230"/><path d="M${f1(hx-6)} 198 l38 -26 l38 26z" fill="#0A1230"/><rect x="${f1(hx+44)}" y="174" width="8" height="16" fill="#0A1230"/>
+      <rect class="tw" style="--d:6s" x="${f1(hx+10)}" y="206" width="14" height="12" rx="1.5" fill="#FFC864"/><rect x="${f1(hx+38)}" y="206" width="14" height="12" rx="1.5" fill="#FFB547" opacity=".85"/></g>
+      <circle cx="${f1(hx+48)}" cy="160" r="5" fill="#fff" opacity=".12" class="cl" style="--d:8s"/><circle cx="${f1(hx+54)}" cy="146" r="7" fill="#fff" opacity=".08" class="cl" style="--d:10s"/>`;
+  } else if (type === "sky") {
+    for (let i=0;i<3;i++) g += `<path d="${ridge(r,200+i*22,24,6)}" fill="#fff" opacity="${(.45+i*.2).toFixed(2)}" class="cl" style="--d:${30+i*12}s"/>`;
+    g += `<g class="pl" style="--d:${(14+r()*8).toFixed(0)}s"><g transform="translate(0 ${f1(80+r()*40)}) scale(1.4)" fill="#fff"><path d="M0 10 L34 6 L46 0 L50 2 L44 8 L58 9 L60 12 L44 13 L50 19 L46 20 L34 14 L0 12z"/></g></g>`;
+  } else if (type === "canal") {
+    g += `<path d="${ridge(r,172,10,6)}" fill="#7E9A6A" opacity=".5"/>`;
+    const wx = 24 + r()*50;
+    g += `<g opacity=".55" fill="#5B4636"><path d="M${f1(wx)} 172 l6 -44 l6 0 l6 44z"/><g class="spin" style="transform-origin:${f1(wx+9)}px 128px"><path d="M${f1(wx+9)} 128 l-2 -32 l5 0 l0 30z M${f1(wx+9)} 128 l32 -2 l0 5 l-30 0z M${f1(wx+9)} 128 l2 32 l-5 0 l0 -30z M${f1(wx+9)} 128 l-32 2 l0 -5 l30 0z"/></g></g>`;
+    const cols = ["#8E3B2E","#B4543C","#D9A441","#2F5D62","#E8DCC4","#5E3A2E","#A86B4E","#C9B58F","#3E4E6E"];
+    let x = -6, refl = ""; const base = 202;
+    while (x < 406) {
+      const w = 26 + r()*16, hh = 58 + r()*40, top = base - hh, col = cols[Math.floor(r()*cols.length)], gab = Math.floor(r()*3);
+      let roof;
+      if (gab === 0) roof = `M${f1(x)} ${f1(top)} L${f1(x+w/2)} ${f1(top-18)} L${f1(x+w)} ${f1(top)}Z`;
+      else if (gab === 1) { const s = w/6; roof = `M${f1(x+s)} ${f1(top)} L${f1(x+s)} ${f1(top-6)} L${f1(x+2*s)} ${f1(top-6)} L${f1(x+2*s)} ${f1(top-12)} L${f1(x+4*s)} ${f1(top-12)} L${f1(x+4*s)} ${f1(top-6)} L${f1(x+5*s)} ${f1(top-6)} L${f1(x+5*s)} ${f1(top)}Z`; }
+      else roof = `M${f1(x+3)} ${f1(top)} Q${f1(x+3)} ${f1(top-8)} ${f1(x+w*.3)} ${f1(top-10)} Q${f1(x+w/2)} ${f1(top-24)} ${f1(x+w*.7)} ${f1(top-10)} Q${f1(x+w-3)} ${f1(top-8)} ${f1(x+w-3)} ${f1(top)}Z`;
+      let house = `<rect x="${f1(x)}" y="${f1(top)}" width="${f1(w)}" height="${f1(hh)}" fill="${col}"/><path d="${roof}" fill="${col}"/>`;
+      for (let wy = top + 8; wy < base - 12; wy += 16) for (let k2 = 0; k2 < 2; k2++) house += `<rect x="${f1(x + w*.2 + k2*w*.35)}" y="${f1(wy)}" width="${f1(w*.22)}" height="10" fill="#F6EEDC" opacity=".88"/>`;
+      g += house; refl += house; x += w + 1.5;
+    }
+    g += `<rect y="${base}" width="400" height="7" fill="#5A4636"/><rect y="208" width="400" height="52" fill="#2F5878"/>`;
+    g += `<g clip-path="url(#${id}c)"><g transform="translate(0 418) scale(1 -1)" opacity=".24">${refl}</g></g>` + waves(r, 214, 5, 9, .16);
+    g += `<path d="M140 209 Q200 178 260 209" stroke="#4A3A2E" stroke-width="7" fill="none"/><path d="M134 198 L266 198" stroke="#4A3A2E" stroke-width="2"/>`;
+    g += `<g class="cl" style="--d:26s"><path d="M${f1(40+r()*60)} 238 l46 0 l-6 7 l-36 0z" fill="#7A3B2A"/></g>`;
+  } else if (type === "bridge") {
+    g += `<path d="${ridge(r,178,42,3)}" fill="#6E8F7A" opacity=".75"/><rect y="150" width="400" height="34" fill="#fff" opacity=".35" class="cl" style="--d:40s"/>`;
+    g += `<rect y="186" width="400" height="74" fill="#3D6E9E"/>` + waves(r, 196, 6, 10, .12);
+    const T1 = 112, T2 = 296, top = 62, deck = 186, cy = top + 8, cc = deck - 18;
+    g += `<path d="M-10 ${deck-6} Q${(T1-10)/2} ${deck-34} ${T1} ${cy} Q${(T1+T2)/2} ${cc} ${T2} ${cy} Q${(T2+410)/2} ${deck-34} 410 ${deck-6}" stroke="#C0362C" stroke-width="2.4" fill="none"/>`;
+    for (let x = T1 + 8; x < T2 - 4; x += 8) { const t = (x - T1)/(T2 - T1), y = (1-t)*(1-t)*cy + 2*(1-t)*t*cc + t*t*cy; g += `<line x1="${x}" y1="${f1(y)}" x2="${x}" y2="${deck-4}" stroke="#C0362C" stroke-width=".8" opacity=".8"/>`; }
+    for (const T of [T1, T2]) { g += `<rect x="${T-8}" y="${top}" width="5" height="${deck-top+34}" fill="#C0362C"/><rect x="${T+3}" y="${top}" width="5" height="${deck-top+34}" fill="#C0362C"/>`; for (const yy of [top+4, top+34, top+70, deck-22]) g += `<rect x="${T-8}" y="${yy}" width="16" height="4" fill="#A52E25"/>`; }
+    g += `<rect x="-10" y="${deck-5}" width="420" height="6" fill="#A52E25"/>`;
+    g += `<g class="cl" style="--d:22s"><path d="M${f1(250+r()*60)} 228 l30 0 l-4 6 l-22 0z" fill="#fff" opacity=".9"/><path d="M${f1(262+r()*50)} 226 l0 -16 l9 15z" fill="#fff" opacity=".9"/></g>`;
+  } else if (type === "pastel") {
+    const cols = ["#F4B6C2","#B8E0C8","#F9E09A","#CDB8E8","#A9D6F5","#F7C59F","#F2A7A0"];
+    let x = -4; const base = 222;
+    while (x < 404) { const w = 40 + r()*16, hh = 80 + r()*44, top = base - hh, col = cols[Math.floor(r()*cols.length)];
+      g += `<rect x="${f1(x)}" y="${f1(top)}" width="${f1(w)}" height="${f1(hh)}" fill="${col}"/><rect x="${f1(x-2)}" y="${f1(top-6)}" width="${f1(w+4)}" height="7" fill="#fff" opacity=".85"/>`;
+      for (let wy = top + 12; wy < base - 26; wy += 26) for (let k2 = 0; k2 < 2; k2++) { const wx = x + w*.18 + k2*w*.42; g += `<rect x="${f1(wx)}" y="${f1(wy)}" width="${f1(w*.22)}" height="15" fill="#fff" opacity=".9"/><rect x="${f1(wx-3)}" y="${f1(wy)}" width="3" height="15" fill="#2F5D3A"/><rect x="${f1(wx+w*.22)}" y="${f1(wy)}" width="3" height="15" fill="#2F5D3A"/>`; }
+      g += `<rect x="${f1(x+w*.38)}" y="${base-20}" width="${f1(w*.24)}" height="20" fill="#3B2A22" opacity=".8"/>`;
+      x += w + 1; }
+    g += `<rect y="${base}" width="400" height="38" fill="#CBBFA9"/><rect y="${base}" width="400" height="4" fill="#A99C86"/>`;
+    const px = r() > .5 ? 350 : 46; g += palm(px, 250, 120, px > 200 ? 1 : -1, "#2E6B3A", "#6B5A44");
+  } else if (type === "oldtown") {
+    g += `<path d="${ridge(r,170,30,3)}" fill="#9AA5B8" opacity=".45"/>`;
+    const stones = ["#CDBFA8","#B9A78E","#D8CBB5","#A99880","#C4B49A"], roofs = ["#5FA08A","#4B4F5C","#6FAF98"];
+    let x = -4; const base = 214;
+    while (x < 404) { const w = 26 + r()*26, hh = 46 + r()*40, top = base - hh;
+      g += `<rect x="${f1(x)}" y="${f1(top)}" width="${f1(w)}" height="${f1(hh)}" fill="${stones[Math.floor(r()*stones.length)]}"/><path d="M${f1(x-2)} ${f1(top)} L${f1(x+w/2)} ${f1(top-14)} L${f1(x+w+2)} ${f1(top)}Z" fill="${roofs[Math.floor(r()*roofs.length)]}"/>`;
+      for (let wy = top + 8; wy < base - 10; wy += 14) for (let wx = x + 5; wx < x + w - 6; wx += 9) g += `<rect x="${f1(wx)}" y="${f1(wy)}" width="4" height="7" fill="#5A4A3A" opacity=".5"/>`;
+      x += w + 1; }
+    const cx = 150 + r()*100;
+    g += `<g fill="#B3A185"><rect x="${f1(cx-34)}" y="96" width="68" height="118"/><rect x="${f1(cx-34)}" y="70" width="20" height="40"/><rect x="${f1(cx+14)}" y="70" width="20" height="40"/></g><g fill="#5FA08A"><path d="M${f1(cx-36)} 72 L${f1(cx-24)} 34 L${f1(cx-12)} 72Z"/><path d="M${f1(cx+12)} 72 L${f1(cx+24)} 34 L${f1(cx+36)} 72Z"/></g><path d="M${f1(cx-10)} 214 L${f1(cx-10)} 176 Q${f1(cx)} 160 ${f1(cx+10)} 176 L${f1(cx+10)} 214Z" fill="#5A4636"/><circle cx="${f1(cx)}" cy="136" r="9" fill="#F6E7C8" opacity=".9"/>`;
+    g += `<rect y="${base}" width="400" height="46" fill="#6B4A35"/>`;
+    const leaves = ["#D9481C","#F08A24","#F6B93B","#B5301E","#E8682A"];
+    for (let i = 0; i < 9; i++) { const tx = 10 + i*46 + r()*20, ty = 222 + r()*8, rr = 16 + r()*10;
+      g += `<rect x="${f1(tx-2)}" y="${f1(ty)}" width="4" height="${f1(260-ty)}" fill="#4A3020"/>`;
+      for (let k2 = 0; k2 < 5; k2++) g += `<circle cx="${f1(tx + (r()-.5)*rr*1.4)}" cy="${f1(ty - rr*.6 + (r()-.5)*rr)}" r="${f1(rr*(.5+r()*.4))}" fill="${leaves[Math.floor(r()*leaves.length)]}"/>`; }
+    for (let i = 0; i < 7; i++) g += `<ellipse class="fall" style="--d:${(7+r()*6).toFixed(1)}s;--dl:-${(r()*8).toFixed(1)}s" cx="${f1(r()*400)}" cy="${f1(60+r()*80)}" rx="3" ry="1.6" fill="${leaves[Math.floor(r()*leaves.length)]}"/>`;
+  } else if (type === "tropical") {
+    g += `<path d="${ridge(r,150,44,4)}" fill="#6FB58C" opacity=".6"/><rect y="146" width="400" height="26" fill="#fff" opacity=".25" class="cl" style="--d:44s"/><path d="${ridge(r,184,36,4)}" fill="#3E8E5E"/>`;
+    const cx = 150 + r()*100;
+    g += `<g><path d="M${f1(cx-34)} 214 L${f1(cx+34)} 214 L${f1(cx+26)} 198 L${f1(cx-26)} 198Z" fill="#B9862A"/><path d="M${f1(cx-22)} 198 Q${f1(cx-22)} 158 ${f1(cx)} 136 Q${f1(cx+22)} 158 ${f1(cx+22)} 198Z" fill="#E2B13C"/><rect x="${f1(cx-20)}" y="182" width="40" height="4" fill="#B9862A"/><rect x="${f1(cx-15)}" y="164" width="30" height="3" fill="#B9862A"/><path d="M${f1(cx-4)} 138 L${f1(cx)} 92 L${f1(cx+4)} 138Z" fill="#E2B13C"/><circle class="glow" cx="${f1(cx)}" cy="92" r="3" fill="#FFF3C4"/>
+      <path d="M${f1(cx-70)} 214 L${f1(cx-50)} 214 L${f1(cx-53)} 206 L${f1(cx-67)} 206Z" fill="#B9862A"/><path d="M${f1(cx-66)} 206 Q${f1(cx-66)} 186 ${f1(cx-60)} 178 Q${f1(cx-54)} 186 ${f1(cx-54)} 206Z" fill="#E2B13C"/><path d="M${f1(cx-61)} 179 L${f1(cx-60)} 160 L${f1(cx-59)} 179Z" fill="#E2B13C"/></g>`;
+    g += `<rect y="214" width="400" height="46" fill="#2E8C8A"/>` + waves(r, 222, 4, 9, .16);
+    g += palm(30, 250, 130, -1, "#1F6B3E") + palm(372, 252, 112, 1, "#1F6B3E");
+    g += `<g class="sway"><path d="M330 260 C300 230 290 210 300 186 C312 214 320 236 336 258Z" fill="#2C7A46"/><path d="M78 260 C102 232 116 214 108 190 C94 216 84 236 70 258Z" fill="#2C7A46"/></g>`;
+  } else if (type === "grassland") {
+    g += `<path d="${ridge(r,182,22,3)}" fill="#B8C46A" opacity=".75"/><path d="${ridge(r,208,24,3)}" fill="#9AAE52"/>`;
+    const yx = [60 + r()*60, 190 + r()*50, 300 + r()*60];
+    yx.forEach((x, i) => { const y = 206 + (i === 1 ? -4 : 2), s = i === 1 ? 1.15 : .9;
+      g += `<g transform="translate(${f1(x)} ${f1(y)}) scale(${s})"><path d="M-17 0 L-17 -13 Q0 -31 17 -13 L17 0Z" fill="#F6F1E6"/><rect x="-17" y="-13" width="34" height="3" fill="#2F6DB5"/><path d="M-17 -13 Q0 -31 17 -13" stroke="#2F6DB5" stroke-width="1.4" fill="none"/><rect x="-4" y="-9" width="8" height="9" fill="#D9481C"/><circle cx="0" cy="-27" r="2.2" fill="#2F6DB5"/></g>`; });
+    g += `<path d="${ridge(r,236,18,3)}" fill="#7D9442"/>`;
+    for (let i = 0; i < 3; i++) { const hx = 40 + r()*320, hy = 236 + r()*14; g += `<g class="cl" style="--d:${(40+r()*30).toFixed(0)}s"><path d="M${f1(hx)} ${f1(hy)} l3 -8 q8 -4 16 -1 l4 -5 l2 1 l-2 7 l0 6 l-2 0 l0 -5 l-12 0 l-1 5 l-2 0 l0 -5z" fill="#3B2A1A"/></g>`; }
+    g += `<path class="cl" style="--d:24s" d="M${f1(80+r()*200)} ${f1(70+r()*30)} q8 -7 16 0 q8 -7 16 0" stroke="#3B2A1A" stroke-width="1.8" fill="none" opacity=".7"/>`;
+  } else {
+    const sk = type === "skyline", hk = /hong kong|香港|macau/i.test(opts.text || "");
+    if (hk || r() > .5) g += `<path d="${ridge(r,170,60,3)}" fill="${night ? (sk ? "#241A52" : "#0E1A45") : (sk ? "#8A5A7A" : "#3B5BAA")}" opacity=".7"/>`;
+    g += towers(r, night, sk
+      ? {back: night ? "#2A1E5C" : "#8A5A7A", front: night ? "#120C2E" : "#3B2445", water: night ? "#140F3A" : "#4A3460", tall: hk ? 120 : 100}
+      : {back: night ? "#14245C" : "#5577C4", front: night ? "#081233" : "#1D3576", water: night ? "#0A1A4A" : "#2A5BB8", tall: 90});
+  }
+  g += `<rect width="400" height="260" filter="url(#grain)" opacity=".16" style="mix-blend-mode:soft-light"/>`;
+  return `<svg class="scene" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${g}</svg>`;
+}
+function tripText(t){ return (t.items||[]).slice(0,40).map(i => [i.title, i.location, i.to].join(" ")).join(" "); }
+function tripType(t){ if (t.scene) return t.scene; const a = sceneType(t.name); return a !== "city" ? a : sceneType(tripText(t)); }
+function coverArt(t, opts={}){
+  const ph = S.photos[t.id];
+  if (ph && ph.data) return `<img src="${h(ph.data)}" alt="">`;
+  return scene(t.id, tripType(t), {text: t.name + " " + tripText(t)});
+}
+function dayArt(t, d, items){
+  if (items.some(i => i.kind === "flight")) return scene(t.id + d, "sky");
+  const st = items.find(i => i.kind === "stay");
+  if (st && /^\s*home\b/i.test(st.title)) return scene(t.id + d, "home");
+  const txt = items.map(i => [i.title, i.location, i.to, i.from].join(" ")).join(" ");
+  const ty = sceneType(txt);
+  return scene(t.id + d, ty !== "city" ? ty : tripType(t), {text: txt + " " + t.name});
+}
+
+/* ======================= state ======================= */
+const S = { db:null, dbState:"loading", mode:null, lockedTripId:null, canWrite:true, sample:null,
+  trips:[], photos:{}, inbox:[], meta:{}, metaReady:false,
+  ignoring:null, tab: LS.get("trips.tab") || "trips", tripId: LS.get("trips.open"), mapTrip: LS.get("trips.mapTrip"), mapDay:"all", expTrip:null };
+const tripById = id => S.trips.find(t => t.id === id);
+function orderedTrips(){ const rank = k => ({now:0,up:1,undated:2,past:3})[k]; return S.trips.slice().sort((x,y) => { const a = status(x).key, b = status(y).key; if (rank(a) !== rank(b)) return rank(a) - rank(b); const c = (tripSpan(x)[0]||"").localeCompare(tripSpan(y)[0]||""); return a === "past" ? -c : c; }); }
+const mirror = t => S.mode === "app" && !!(t && t.sharedUrl);
+const editable = t => S.dbState === "on" && S.canWrite && !mirror(t);
+
+function tripSpan(t){
+  let a = t.startDate, b = t.endDate;
+  for (const it of t.items||[]) { const s = dOf(it.start), e = dOf(it.end) || s;
+    if (s && (!a || s < a)) a = s;
+    if (e && it.kind !== "stay" && (!b || e > b)) b = e; }
+  if (a && !b) b = a;
+  return [a,b];
+}
+function status(t){
+  const [a,b] = tripSpan(t), now = todayStr();
+  if (!a) return {key:"undated", label:"No dates"};
+  if (now > b) return {key:"past", label:fmtD(a,{year:"numeric"})};
+  if (now >= a) return {key:"now", label:"Happening now"};
+  const n = dayDiff(now, a);
+  return {key:"up", n, label: n===1 ? "Tomorrow" : `${n} days to go`};
+}
+function nightsWithoutStay(t){
+  const [a,b] = tripSpan(t); if (!a || !b || a >= b) return [];
+  const items = t.items||[], out = [];
+  for (let d = a; d < b; d = addDays(d,1)) {
+    const covered = items.some(i => i.start && i.end && (i.kind === "stay" || MOVING.has(i.kind)) && dOf(i.start) <= d && dOf(i.end) > d);
+    if (!covered) out.push(d);
+  }
+  return out;
+}
+const itemState = it => it.walkin ? "walkin" : it.hold ? "hold" : it.tbd ? "tbd" : it.tentative ? "tentative" : "booked";
+function bookingProgress(t){
+  const items = (t.items||[]).filter(i => i.kind !== "note" && !i.hold && !i.walkin);
+  const gaps = nightsWithoutStay(t).length, tbd = items.filter(i => i.tbd).length, tent = items.filter(i => !i.tbd && i.tentative).length;
+  const total = items.length + gaps; const done = items.length - tbd - tent;
+  return {total, done, tbd, tent, gaps, open: tbd + gaps + tent, p: total ? done/total : 1};
+}
+function openText(bp){ const a = []; if (bp.tbd + bp.gaps) a.push(`${bp.tbd + bp.gaps} to book`); if (bp.tent) a.push(`${bp.tent} to finalize`); return a.join(" · "); }
+const ring = (p, cls="") => `<span class="ring ${cls}" style="--p:${Math.max(0,Math.min(1,p)).toFixed(3)}"><svg viewBox="0 0 46 46"><circle class="tr" cx="23" cy="23" r="18"/><circle class="pr" cx="23" cy="23" r="18"/></svg><b>${Math.round(p*100)}%</b></span>`;
+
+/* ======================= persistence ======================= */
+let chain = Promise.resolve();
+function queue(fn, fail){ chain = chain.then(fn).catch(e => { if (e && e.code === "invalid_argument") { S.canWrite = false; render(); toast("You can view this trip but not edit it."); } else toast(e && e.code === "quota_exceeded" ? "Storage is full. Delete an old trip to make room." : (fail || "Couldn't save. Check your connection and try again.")); }); return chain; }
+function persist(t){
+  if (!S.db) { toast("Sign in to claude.ai to save changes."); return Promise.resolve(); }
+  const body = JSON.parse(JSON.stringify(t)); delete body.id; body.updatedAt = Date.now();
+  const i = S.trips.findIndex(x => x.id === t.id), local = {...body, id:t.id};
+  if (i >= 0) S.trips[i] = local; else S.trips.push(local);
+  render();
+  return queue(() => S.db.collection("trips").doc(t.id).set(body));
+}
+function removeTrip(id){
+  S.trips = S.trips.filter(t => t.id !== id);
+  if (S.tripId === id) { S.tripId = null; LS.set("trips.open", null); }
+  render();
+  queue(() => S.db.collection("trips").doc(id).delete(), "Couldn't delete. Try again.");
+  if (S.photos[id]) queue(() => S.db.collection("photos").doc(id).delete());
+}
+
+/* ======================= navigation ======================= */
+const app = document.getElementById("app"), bar = document.getElementById("tabbar");
+function transition(fn){ if (document.startViewTransition && !matchMedia("(prefers-reduced-motion:reduce)").matches) document.startViewTransition(fn); else fn(); }
+function setTab(tab){ if (S.tab === tab && !(tab === "trips" && S.tripId) ) { window.scrollTo({top:0,behavior:"smooth"}); return; }
+  transition(() => { S.tab = tab; if (tab === "trips") { S.tripId = null; LS.set("trips.open", null); } LS.set("trips.tab", tab); render(); window.scrollTo(0,0); }); }
+function openTrip(id, fromEl){
+  const art = fromEl && fromEl.querySelector(".art"); if (art) art.style.viewTransitionName = "trip-art";
+  transition(() => { if (art) art.style.viewTransitionName = ""; S.tripId = id; S.tab = "trips"; LS.set("trips.open", id); LS.set("trips.tab","trips"); render(); window.scrollTo(0,0); });
+}
+function closeTrip(){
+  const id = S.tripId;
+  const hero = document.querySelector(".hero-wrap .art");
+  transition(() => { S.tripId = null; LS.set("trips.open", null); render(); window.scrollTo(0,0);
+    const card = document.querySelector(`[data-open="${CSS.escape(id)}"] .art`); if (card) { card.style.viewTransitionName = "trip-art"; setTimeout(()=>{ card.style.viewTransitionName = ""; }, 600); } });
+}
+
+/* ======================= views: trips ======================= */
+function tripPage(t, size, i){
+  const [a,b] = tripSpan(t), st = status(t), bp = bookingProgress(t);
+  const days = a ? dayDiff(a,b)+1 : 0;
+  const right = size === "small" ? "" : (st.key !== "past" && bp.total ? ring(bp.p) : "");
+  const chips = size === "small" ? "" : `<div class="toprow"><span class="chip">${h(st.label)}</span>${t.sharedUrl?`<span class="chip">${ic("share",'style="width:14px;height:14px"')}Shared</span>`:""}</div>`;
+  return `<button class="page ${size} rise" style="--i:${i}" data-open="${h(t.id)}" aria-label="${h(t.name)}">
+    <div class="art">${coverArt(t)}</div><div class="scrim"></div>${chips}
+    <div class="cap"><div style="min-width:0"><div class="nm">${h(t.name)}</div><div class="dt tnum">${h(fmtRange(a,b))}${days && size!=="small" ? ` · ${days} days` : ""}</div></div>${right}</div></button>`;
+}
+function viewTrips(){
+  if (S.dbState === "loading") return loadingView();
+  const cols = {now:[], up:[], undated:[], past:[]};
+  for (const t of S.trips) cols[status(t).key].push(t);
+  const by = (x,y) => (tripSpan(x)[0]||"").localeCompare(tripSpan(y)[0]||"");
+  cols.now.sort(by); cols.up.sort(by); cols.past.sort((x,y)=>-by(x,y));
+  const upcoming = [...cols.now, ...cols.up];
+  const next = upcoming[0];
+  const lede = next ? (status(next).key === "now" ? `You're on ${next.name} right now.` : `Next up: ${next.name}, ${status(next).label.toLowerCase()}.`) : "Plan something wonderful.";
+  const shareNote = S.mode === "share" && S.snapAt ? ` Updated ${new Intl.DateTimeFormat(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}).format(new Date(S.snapAt))}.` : "";
+  let html = `<div class="ph"><div><h1>${S.mode === "share" ? h(S.snapTitle || "Trips") : "Trips"}</h1><div class="lede">${h(lede + shareNote)}</div></div><div class="btns">${S.dbState==="on" && S.mode==="app"?`<button class="round" data-act="new-trip" aria-label="New trip">${ic("plus")}</button>`:""}</div></div>`;
+  if (!S.trips.length) {
+    return html + `<div class="empty rise"><div class="pic">${scene("empty","beach")}</div><h2>No trips yet</h2><p>${S.dbState==="off" ? "Sign in to claude.ai to keep your trips here." : "Start your first trip, or ask Claude to plan one for you."}</p>${S.dbState==="on"?`<button class="btn" data-act="new-trip">${ic("plus")}New Trip</button>`:""}</div>`;
+  }
+  let i = 0;
+  if (upcoming.length) {
+    html += `<div class="stack">${tripPage(upcoming[0],"hero",i++)}</div>`;
+    if (upcoming.length > 1) html += `<div class="sec">Upcoming<span class="aux">${upcoming.length - 1} more</span></div><div class="stack two">${upcoming.slice(1).map(t => tripPage(t,"std",i++)).join("")}</div>`;
+  }
+  if (cols.undated.length) html += `<div class="sec">Someday</div><div class="stack">${cols.undated.map(t => tripPage(t,"std",i++)).join("")}</div>`;
+  if (cols.past.length) html += `<div class="sec">Past Trips<span class="aux">${cols.past.length}</span></div><div class="grid2">${cols.past.map(t => tripPage(t,"small",i++)).join("")}</div>`;
+  return html;
+}
+function loadingView(){ return `<div class="empty"><div class="spinner" style="margin:40px auto;width:28px;height:28px"></div></div>`; }
+
+/* ======================= views: trip detail ======================= */
+function itemSub(it){
+  const p = [];
+  if (MOVING.has(it.kind)) { if (it.from || it.to) p.push(`${it.from||"?"} → ${it.to||"?"}`); const c = [it.company, it.number].filter(Boolean).join(" "); if (c) p.push(c); }
+  else if (it.kind === "stay") { const n = it.start && it.end ? dayDiff(dOf(it.start), dOf(it.end)) : 0; if (n > 0) p.push(`${n} night${n>1?"s":""}`); if (it.location) p.push(it.location); }
+  else if (it.location) p.push(it.location);
+  if (!p.length && it.notes) p.push(it.notes.split("\n")[0]);
+  return p.join(" · ");
+}
+function tags(it){
+  let s = "";
+  if (it.walkin) s += `<span class="tag hold">Walk-in</span>`;
+  else if (it.hold) s += `<span class="tag hold">Maybe</span>`;
+  else if (it.tbd) s += `<span class="tag tbd">To book</span>`;
+  else if (it.tentative) s += `<span class="tag tent">Tentative</span>`;
+  if (it.review) s += `<span class="tag gm">From Gmail</span>`;
+  return s;
+}
+function itemRow(it, mode){
+  const k = it.kind in KL ? it.kind : "note";
+  if (mode === "arrive") return `<button class="row" data-item="${h(it.id)}"><span class="ico" style="background:var(--k-${k});color:var(--k-${k});opacity:.75">${ic(k)}</span><span class="body"><div class="t">Arrive · ${h(it.to || it.title)}</div><div class="s">${h([it.title, it.number].filter(Boolean).join(" · "))}</div></span><span class="times tnum"><div class="a">${h(fmtT(it.end))}</div></span></button>`;
+  if (mode === "checkout") return `<button class="row" data-item="${h(it.id)}"><span class="ico ghost">${ic("out")}</span><span class="body"><div class="t muted">Check out · ${h(it.title)}</div></span><span class="times tnum"><div class="b">${h(fmtT(it.end))}</div></span></button>`;
+  const s = fmtT(it.start), e = fmtT(it.end), plus = it.end && it.start ? dayDiff(dOf(it.start), dOf(it.end)) : 0;
+  const split = SPLIT.has(k) && it.end;
+  let times = split ? (s ? `<div class="a">${h(s)}</div>` : "") : k === "stay" ? (s ? `<div class="b">${h(s)}</div>` : "") : s ? `<div class="a">${h(s)}</div>${e ? `<div class="b">${h(e)}${plus>0?`<sup>+${plus}</sup>`:""}</div>` : ""}` : `<div class="b">Anytime</div>`;
+  return `<button class="row" data-item="${h(it.id)}"><span class="ico" style="background:var(--k-${k});color:var(--k-${k})">${ic(k)}</span>
+    <span class="body"><div class="t">${h(k === "stay" ? "Check in · " + it.title : split ? "Depart · " + (it.title || KL[k]) : it.title || KL[k])}</div><div class="s">${tags(it)}${h(itemSub(it))}</div></span>
+    <span class="times tnum">${times}</span></button>`;
+}
+function viewTripDetail(t){
+  const [a,b] = tripSpan(t), items = t.items||[], st = status(t), bp = bookingProgress(t);
+  const stays = items.filter(i => i.kind === "stay" && i.start && i.end);
+  const nightAt = d => stays.find(s => dOf(s.start) <= d && d < dOf(s.end));
+  const count = k => items.filter(i => i.kind === k).length;
+  const ed = editable(t);
+  const back = S.mode !== "trip" ? `<button class="glassbtn" data-act="back" aria-label="All trips">${ic("back")}</button>` : `<span></span>`;
+  let html = `<div class="hero-wrap"><div class="art" style="view-transition-name:trip-art">${coverArt(t)}</div><div class="scrim"></div>
+    <div class="toprow">${back}<div class="r">${S.mode==="app"?`<button class="glassbtn" data-act="share">${ic("share")}Share</button>`:""}${ed?`<button class="glassbtn" data-act="edit-trip" aria-label="Edit trip">${ic("edit")}</button>`:""}</div></div>
+    <div class="cap"><h1>${h(t.name)}</h1><div class="dt tnum">${h(fmtRange(a,b))}${st.key==="up"?` · ${h(st.label.toLowerCase())}`:st.key==="now"?" · happening now":""}</div></div></div>`;
+  html += `<div class="summary rise">${ring(bp.p,"ink")}<div class="txt"><div class="big">${bp.open ? h(openText(bp)) : bp.total ? "Everything's booked" : "Nothing planned yet"}</div><div class="sm">${bp.done} of ${bp.total} booked</div></div>${bp.open && S.mode !== "share"?`<button class="btn sm soft" data-act="goto-tobook">Review</button>`:""}</div>`;
+  html += `<div class="facts tnum">${a?`<div class="fact"><b>${dayDiff(a,b)+1}</b>days</div>`:""}${count("flight")?`<div class="fact"><b>${count("flight")}</b>flights</div>`:""}${stays.length?`<div class="fact"><b>${stays.length}</b>stays</div>`:""}${count("activity")+count("dining")?`<div class="fact"><b>${count("activity")+count("dining")}</b>plans</div>`:""}${(t.people||[]).length>1?`<div class="fact"><b>${t.people.length}</b>travelers</div>`:""}</div>`;
+  if (mirror(t)) html += `<div class="note-banner">${ic("info")}<div>This trip is shared, so it's edited on its own page. Changes there show up here each morning. <a href="${h(t.sharedUrl)}" target="_blank" rel="noopener">Open shared trip</a></div></div>`;
+  else if (S.mode === "trip" && !S.canWrite) html += `<div class="note-banner">${ic("info")}<div>You're viewing this trip. Ask the owner for edit access to make changes.</div></div>`;
+  if (ed) html += `<div class="actions"><button class="btn" data-act="add-item">${ic("plus")}Add to Trip</button><button class="btn soft" data-act="goto-map">${ic("map")}Map</button></div>`;
+  else if (S.mode === "share") html += `<div class="actions"><button class="btn soft" data-act="goto-map">${ic("map")}See it on the map</button></div>`;
+  if (!items.length) html += `<div class="note-banner">${ic("info")}<div>Nothing here yet. Add flights, stays and plans and they'll line up day by day, like pages in a book.</div></div>`;
+  if (a) {
+    const byDay = {};
+    for (const it of items) if (it.start) (byDay[dOf(it.start)] ||= []).push({it, at:tOf(it.start)||"00:00", mode:"start"});
+    for (const s of stays) (byDay[dOf(s.end)] ||= []).push({it:s, at:tOf(s.end)||"23:59", mode:"checkout"});
+    for (const m of items) if (SPLIT.has(m.kind) && m.start && m.end) (byDay[dOf(m.end)] ||= []).push({it:m, at:tOf(m.end)||"23:59", mode:"arrive"});
+    const keys = Object.keys(byDay), first = [a,...keys].sort()[0], last = [b,...keys].sort().pop();
+    for (let i = 0; i <= dayDiff(first,last); i++) {
+      const d = addDays(first,i), rows = (byDay[d]||[]).sort((x,y)=> x.at.localeCompare(y.at) || (x.mode==="checkout"?-1:1));
+      const night = nightAt(d), isToday = d === todayStr();
+      html += `<section class="day rise" style="--i:${Math.min(i,8)}" id="d-${d}"><div class="dayband"><div class="art">${dayArt(t, d, [...rows.map(r=>r.it), night].filter(Boolean))}</div><div class="scrim"></div>
+        <div class="lbl"><div class="d1">${h(fmtD(d,{weekday:"long"}))}</div><div class="d2 tnum">${h(fmtD(d,{month:"long",day:"numeric"}))} · Day ${dayDiff(a,d)+1}</div></div>${isToday?`<span class="chip solid today">Today</span>`:""}</div>
+        <div class="daybody">${rows.length ? rows.map(r => itemRow(r.it, r.mode)).join("") : `<button class="row" data-add-day="${d}" ${ed?"":"disabled"}><span class="body"><div class="t muted">A free day</div></span>${ed?`<span style="color:var(--blue);font-weight:600;font-size:14px">Add plan</span>`:""}</button>`}
+        ${night ? `<div class="night">${ic("moon")}<span>Night at ${h(night.title)}</span></div>` : ""}</div></section>`;
+    }
+  }
+  const und = items.filter(i => !i.start);
+  if (und.length) html += `<div class="sec">Not scheduled</div><div class="card">${und.map(it => itemRow(it,"start")).join("")}</div>`;
+  if (t.notes) html += `<div class="sec">Notes</div><div class="card"><div class="notes">${h(t.notes)}</div></div>`;
+  return html;
+}
+
+/* ======================= views: to book ======================= */
+function viewToBook(){
+  if (S.dbState === "loading") return loadingView();
+  const pool0 = S.mode === "trip" ? S.trips.filter(t => t.id === S.lockedTripId) : orderedTrips().filter(t => ["now","up","undated"].includes(status(t).key));
+  if (S.mode === "app" && pool0.length && (!S.bookTrip || (S.bookTrip !== "all" && !pool0.some(t => t.id === S.bookTrip)))) S.bookTrip = pool0[0].id;
+  const pool = S.mode === "app" && S.bookTrip !== "all" ? pool0.filter(t => t.id === S.bookTrip) : pool0;
+  const chips = S.mode === "app" && pool0.length > 1 ? `<div class="chips">${pool0.map(x => `<button class="pick" data-booktrip="${h(x.id)}" aria-pressed="${x.id===S.bookTrip}"><span class="thumb">${coverArt(x)}</span>${h(x.name)}</button>`).join("")}<button class="pick np" data-booktrip="all" aria-pressed="${S.bookTrip==="all"}">All upcoming</button></div>` : "";
+  let open = 0, total = 0, html = "";
+  pool.forEach((t, ti) => {
+    const bp = bookingProgress(t); open += bp.open; total += bp.total;
+    const items = (t.items||[]).filter(i => i.kind !== "note" && !i.hold && (i.tbd || i.tentative)).sort((x,y)=>(x.start||"9").localeCompare(y.start||"9"));
+    const held = (t.items||[]).filter(i => i.kind !== "note" && i.hold).sort((x,y)=>(x.start||"9").localeCompare(y.start||"9"));
+    const gaps = nightsWithoutStay(t);
+    if (!items.length && !gaps.length && !held.length) return;
+    const ed = editable(t);
+    html += `<div class="sec"><span>${h(t.name)}</span><span class="aux">${h(openText(bp))}</span></div><div class="card rise" style="--i:${ti}">`;
+    html += items.map(it => { const k = it.kind in KL ? it.kind : "note";
+      return `<div class="row"><span class="ico" style="background:var(--k-${k});color:var(--k-${k})">${ic(k)}</span>
+        <button class="body" style="text-align:left" data-trip="${h(t.id)}" data-item="${h(it.id)}"><div class="t">${h(it.title)}</div><div class="s tnum">${it.tbd ? "" : `<span class="tag tent">Tentative</span>`}${h(it.start ? fmtD(dOf(it.start),{weekday:"short",month:"short",day:"numeric"}) : "No date")}${itemSub(it)?" · "+h(itemSub(it)):""}</div></button>
+        ${ed ? `<span class="btnrow"><button class="btn sm soft" data-hold="${h(it.id)}" data-trip="${h(t.id)}" title="Keep it in the plan but stop counting it as something to book">Maybe</button>${it.tbd ? `<button class="btn sm soft" data-booked="${h(it.id)}" data-trip="${h(t.id)}">Booked</button>` : `<button class="btn sm soft" data-finalize="${h(it.id)}" data-trip="${h(t.id)}">Finalize</button>`}</span>` : ""}</div>`; }).join("");
+    if (gaps.length) {
+      const runs = []; for (const d of gaps) { const r = runs[runs.length-1]; if (r && addDays(r[1],1) === d) r[1] = d; else runs.push([d,d]); }
+      html += runs.map(([s,e]) => `<div class="row"><span class="ico" style="background:var(--k-stay);color:var(--k-stay);opacity:.55">${ic("stay")}</span>
+        <div class="body"><div class="t">Need a place to stay</div><div class="s tnum">${h(s===e ? "Night of " + fmtD(s,{weekday:"short",month:"short",day:"numeric"}) : `${fmtD(s,{month:"short",day:"numeric"})} – ${fmtD(addDays(e,1),{month:"short",day:"numeric"})} · ${dayDiff(s,addDays(e,1))} nights`)}</div></div>
+        ${ed?`<button class="btn sm soft" data-addstay="${s}|${addDays(e,1)}" data-trip="${h(t.id)}">Add</button>`:""}</div>`).join("");
+    }
+    html += `</div>`;
+    if (held.length) html += `<div class="sec"><span>Maybe · not booking yet</span><span class="aux">${held.length}</span></div><p class="hint" style="margin-top:0">Kept in the plan as tentative ideas. They don't count toward what's left to book.</p><div class="card">` + held.map(it => { const k = it.kind in KL ? it.kind : "note";
+      return `<div class="row"><span class="ico" style="background:var(--k-${k});color:var(--k-${k});opacity:.6">${ic(k)}</span>
+        <button class="body" style="text-align:left" data-trip="${h(t.id)}" data-item="${h(it.id)}"><div class="t">${h(it.title)}</div><div class="s tnum">${h(it.start ? fmtD(dOf(it.start),{weekday:"short",month:"short",day:"numeric"}) : "No date")}</div></button>
+        ${ed ? `<button class="btn sm soft" data-unhold="${h(it.id)}" data-trip="${h(t.id)}">To book</button>` : ""}</div>`; }).join("") + `</div>`;
+  });
+  const p = total ? (total-open)/total : 1;
+  const head = `<div class="ph"><div><h1>To Book</h1><div class="lede">${open ? `${open} thing${open>1?"s":""} to book or finalize across ${S.mode==="trip" || S.bookTrip!=="all" ? "this trip" : "your upcoming trips"}.` : "You're all set. Nothing left to book."}</div></div>${total?ring(p,"ink"):""}</div>`;
+  return head + chips + (html || `<div class="empty rise"><div class="pic">${scene("done","mountain")}</div><h2>All booked</h2><p>Anything marked Not booked or Tentative shows up here, along with nights that still need a place to stay.</p></div>`);
+}
+
+/* ======================= views: inbox ======================= */
+const ACTION_LABEL = {added:"New booking", updated:"Booking changed", cancelled:"Booking cancelled", unmatched:"Not in a trip yet"};
+const RES_LABEL = {ok:"Confirmed", tentative:"Kept as tentative", ignored:"Ignored", added:"Added", noted:"Cancelled · nothing to change", superseded:"Replaced by a later cancellation", stale:"No longer in the trip · nothing to do", removed:"Cancelled · removed from the trip", kept:"Cancelled · kept in the trip to rebook"};
+/* cancellations and stale entries never ask to be added to a trip */
+const isCancel = m => m.action === "cancelled" || /\bcancel(?:l)?ed\b|\bcancellation\b/i.test(`${m.title||""} ${(m.email&&m.email.subject)||""}`);
+const confOf = m => { const c = (m.item && m.item.confirmation) || (m.before && m.before.confirmation); if (c) return String(c).trim(); const x = /confirmation\s*#?\s*([A-Z0-9-]{5,})/i.exec(m.details||""); return x ? x[1] : ""; };
+function sweepReason(m){
+  if (!inboxPending(m)) return null;
+  const {t, it} = entryTrip(m);
+  if (isCancel(m) && !it) return "noted";
+  if (m.tripId && t && !it && m.action !== "unmatched") return "stale";
+  if (!isCancel(m)) { const c = confOf(m); if (c && S.inbox.some(x => x !== m && isCancel(x) && confOf(x) === c && (x.createdAt||0) >= (m.createdAt||0))) return "superseded"; }
+  return null;
+}
+const swept = new Set();
+function sweepInbox(){
+  if (!S.db || !S.canWrite || S.mode !== "app" || S.dbState !== "on") return;
+  for (const m of S.inbox) { if (swept.has(m.id)) continue; const r = sweepReason(m); if (!r) continue; swept.add(m.id);
+    Object.assign(m, {reviewed:true, resolution:r});
+    queue(() => S.db.collection("inbox").doc(m.id).update({reviewed:true, resolution:r, resolvedAt:Date.now()})); }
+}
+const inboxPending = m => !m.resolution && !m.reviewed;
+const inboxEntry = id => S.inbox.find(x => x.id === id);
+function entryTrip(m){ const t = m.tripId && tripById(m.tripId); const it = t && (t.items||[]).find(i => i.id === m.itemId); return {t, it}; }
+function mailCard(m){
+  const k = m.kind in KL ? m.kind : "note", {t, it} = entryTrip(m);
+  let acts = "";
+  if (S.canWrite && S.ignoring === m.id) {
+    const where = m.tripName || "the trip";
+    const msg = m.action === "unmatched" ? "Dismiss this booking? It won't be added to any trip."
+      : m.action === "added" ? `Remove this booking from ${where}?`
+      : m.before ? `Undo this change in ${where}?` : `Dismiss it and leave ${where} as it is?`;
+    acts = `<div class="s" style="color:var(--ink);margin-top:10px">${h(msg)}</div><div class="acts"><button class="btn sm soft" data-ignore-cancel="1">Keep</button><button class="btn sm" style="background:var(--red);color:#fff" data-ignore-yes="${h(m.id)}">${m.action === "added" ? "Remove" : "Ignore"}</button></div>`;
+  } else if (S.canWrite && isCancel(m) && !it) {
+    acts = `<div class="acts"><button class="btn sm soft" data-noted="${h(m.id)}">Got it</button></div>`;
+  } else if (S.canWrite && isCancel(m) && it) {
+    acts = `<div class="acts"><button class="btn sm" data-remove="${h(m.id)}">Remove from trip</button><button class="btn sm soft" data-keep="${h(m.id)}">Keep to rebook</button><button class="btn sm ghost" data-trip="${h(t.id)}" data-item="${h(it.id)}">Open</button></div>`;
+  } else if (S.canWrite && m.action === "unmatched") {
+    acts = `<div class="acts"><button class="btn sm" data-attach="${h(m.id)}">${ic("plus",'style="width:15px;height:15px"')}Add to a Trip</button><button class="btn sm ghost" data-ignore="${h(m.id)}">Ignore</button></div>`;
+  } else if (S.canWrite) {
+    acts = `<div class="acts"><button class="btn sm" data-ok="${h(m.id)}">Looks right</button><button class="btn sm soft" data-tent="${h(m.id)}">Tentative</button><button class="btn sm ghost" data-ignore="${h(m.id)}">Ignore</button>${it ? `<button class="btn sm ghost" data-trip="${h(t.id)}" data-item="${h(it.id)}">Open</button>` : ""}</div>`;
+  }
+  return `<div class="mail" id="m-${h(m.id)}"><span class="ico" style="background:var(--k-${k});color:var(--k-${k})">${ic(k)}</span><div class="body">
+    <div class="k">${h(isCancel(m) ? (it ? "Booking cancelled" : "Cancellation · nothing to change") : (ACTION_LABEL[m.action] || "Booking"))}${m.tripName && it ? " · " + h(m.tripName) : ""}</div><div class="t">${h(m.title)}</div>${m.details ? `<div class="s">${h(m.details)}</div>` : ""}
+    ${m.email && m.email.subject ? `<div class="src">From “${h(m.email.subject)}”${m.email.from ? ` · ${h(m.email.from)}` : ""}</div>` : ""}${acts}</div></div>`;
+}
+function doneRow(m){
+  const k = m.kind in KL ? m.kind : "note", {t, it} = entryTrip(m), res = m.resolution || "ok";
+  return `<div class="mail done"><span class="ico ghost">${ic(k)}</span><div class="body"><div class="t" style="font-weight:600">${h(m.title)}</div><div class="s">${h(RES_LABEL[res] || "Done")}${m.tripName && res !== "ignored" ? " · " + h(m.tripName) : ""}</div></div>${it && res !== "ignored" ? `<button class="btn sm ghost" data-trip="${h(t.id)}" data-item="${h(it.id)}">Open</button>` : ""}</div>`;
+}
+function viewInbox(){
+  if (S.dbState === "loading") return loadingView();
+  const g = S.meta.gmail || {};
+  const all = S.inbox.slice().sort((x,y) => (y.createdAt||0) - (x.createdAt||0));
+  const pending = all.filter(inboxPending), done = all.filter(m => !inboxPending(m));
+  let html = `<div class="ph"><div><h1>Inbox</h1><div class="lede">${g.lastRun ? `Claude checked your Gmail ${h(new Intl.DateTimeFormat(undefined,{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}).format(new Date(g.lastRun)))}.` : "Each morning Claude checks your Gmail for booking confirmations."}</div></div></div>`;
+  if (!all.length) return html + `<div class="empty rise"><div class="pic">${scene("inbox","skyline")}</div><h2>Nothing new</h2><p>When a confirmation email arrives for a flight, hotel, train, tour or dinner, Claude adds it to the right trip and lists it here for you to check.</p></div>`;
+  if (!pending.length) html += `<div class="note-banner">${ic("check")}<div>You're all caught up. New bookings Claude finds will show up here.</div></div>`;
+  else {
+    const matched = pending.filter(m => m.action !== "unmatched" && !isCancel(m)).length;
+    html += `<div class="sec">Needs a look<span class="aux">${pending.length}</span></div>`;
+    html += `<p class="hint" style="margin-top:0">Looks right keeps it. Tentative keeps it but flags it to finalize. Ignore removes a booking Claude added, or undoes a change.</p>`;
+    if (matched > 1 && S.canWrite) html += `<div class="actions" style="margin-top:8px"><button class="btn soft sm" data-act="review-all">All ${matched} look right</button></div>`;
+    html += `<div class="card rise" style="margin-top:10px">${pending.map(mailCard).join("")}</div>`;
+  }
+  if (done.length) html += `<div class="sec">Done<span class="aux">${done.length}</span></div><div class="card">${done.slice(0,40).map(doneRow).join("")}</div>`;
+  return html;
+}
+
+/* ======================= views: map ======================= */
+let MAP = null, mapLayer = null, landLoaded = false, mapEl = null;
+function stopsFor(t, day){
+  const items = (t.items||[]).filter(i => i.start).sort((x,y) => x.start.localeCompare(y.start));
+  const stays = items.filter(i => i.kind === "stay");
+  const pts = [];
+  const pushPt = (lat, lng, label, it, sub) => { if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return; const last = pts[pts.length-1]; if (last && Math.abs(last.lat-lat) < 1e-4 && Math.abs(last.lng-lng) < 1e-4) return; pts.push({lat:+lat, lng:+lng, label, it, sub}); };
+  let list = items, missing = [];
+  if (day !== "all") {
+    list = items.filter(i => dOf(i.start) === day);
+    const prev = stays.find(s => dOf(s.start) < day && dOf(s.end) >= day);
+    if (prev) pushPt(prev.lat, prev.lng, prev.title, prev, "Start of day");
+  }
+  for (const it of list) {
+    if (MOVING.has(it.kind)) {
+      if (it.fromLat == null && it.toLat == null) missing.push(it);
+      pushPt(it.fromLat, it.fromLng, it.from || it.title, it, fmtT(it.start));
+      pushPt(it.toLat, it.toLng, it.to || it.title, it, fmtT(it.end));
+    } else if (it.kind !== "note") {
+      if (it.lat == null) missing.push(it);
+      pushPt(it.lat, it.lng, it.title, it, fmtT(it.start));
+    }
+  }
+  return {pts, missing};
+}
+const useMiles = (() => { try { return /^en-(US|GB|LR|MM)/.test(navigator.language || "") ; } catch { return false; } })();
+function distKm(a, b){ const R = 6371, toR = x => x*Math.PI/180; const dLat = toR(b.lat-a.lat), dLng = toR(b.lng-a.lng); const s = Math.sin(dLat/2)**2 + Math.cos(toR(a.lat))*Math.cos(toR(b.lat))*Math.sin(dLng/2)**2; return 2*R*Math.asin(Math.sqrt(s)); }
+const fmtDist = km => useMiles ? `${(km*0.621371).toFixed(km*0.621371 < 10 ? 1 : 0)} mi` : `${km.toFixed(km < 10 ? 1 : 0)} km`;
+function legInfo(a, b){
+  const km = distKm(a, b);
+  const viaKind = b.it === a.it ? b.it.kind : null;
+  if (viaKind === "flight" || km > 400) return {icon:"flight", text:`${fmtDist(km)} · flight`, mode:"driving"};
+  if (viaKind === "train") return {icon:"train", text:`${fmtDist(km)} · train`, mode:"transit"};
+  if (viaKind === "ferry") return {icon:"ferry", text:`${fmtDist(km)} · ferry`, mode:"transit"};
+  if (km < 1.4 && viaKind !== "transfer") { const m = Math.max(2, Math.round(km/4.8*60)); return {icon:"walk", text:`${fmtDist(km)} · about ${m} min walk`, mode:"walking"}; }
+  const m = Math.max(5, Math.round(km/(km > 30 ? 60 : 26)*60 + 4));
+  return {icon:"transfer", text:`${fmtDist(km)} · about ${m < 90 ? m + " min" : (m/60).toFixed(1) + " hr"} by car`, mode:"driving"};
+}
+function gmapsDay(pts){
+  if (!pts.length) return "";
+  const ll = p => `${p.lat},${p.lng}`;
+  const walkAll = pts.length > 1 && pts.every((p,i) => i === 0 || distKm(pts[i-1], p) < 1.4);
+  if (pts.length === 1) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ll(pts[0]))}`;
+  const way = pts.slice(1,-1).slice(0,9).map(ll).join("|");
+  return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(ll(pts[0]))}&destination=${encodeURIComponent(ll(pts[pts.length-1]))}${way?`&waypoints=${encodeURIComponent(way)}`:""}&travelmode=${walkAll?"walking":"driving"}`;
+}
+function placeLink(p){
+  const it = p.it || {};
+  const q = !MOVING.has(it.kind) && it.location && p.label === it.title ? `${it.title}, ${it.location}` : `${p.lat},${p.lng}`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+}
+const trunc = (s, n) => { s = String(s || ""); return s.length > n ? s.slice(0, n-1).trimEnd() + "…" : s; };
+function niceScale(kmPerPx){
+  const unitKm = useMiles ? 1.609344 : 1, perPx = kmPerPx / unitKm;
+  const steps = [0.1,0.2,0.25,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000];
+  let best = steps[0]; for (const s of steps) if (s / perPx <= 90) best = s;
+  return {px: best / perPx, label: `${best} ${useMiles ? "mi" : "km"}`};
+}
+function smoothPath(Q){
+  if (Q.length < 2) return "";
+  let d = `M${f1(Q[0].x)} ${f1(Q[0].y)}`;
+  for (let i = 0; i < Q.length - 1; i++) {
+    const p0 = Q[i-1] || Q[i], p1 = Q[i], p2 = Q[i+1], p3 = Q[i+2] || p2;
+    d += ` C${f1(p1.x + (p2.x - p0.x)/6)} ${f1(p1.y + (p2.y - p0.y)/6)} ${f1(p2.x - (p3.x - p1.x)/6)} ${f1(p2.y - (p3.y - p1.y)/6)} ${f1(p2.x)} ${f1(p2.y)}`;
+  }
+  return d;
+}
+function routeMap(pts, seed, head){
+  const W = 400, H = 310, padX = 46, padT = 78, padB = 38, id = "rm" + (++SID);
+  const places = [], order = [];
+  pts.forEach((p, i) => {
+    let k = places.findIndex(q => distKm(q, p) < 0.05);
+    if (k < 0) { places.push({lat:p.lat, lng:p.lng, label:p.label, it:p.it, nums:[], subs:[]}); k = places.length - 1; }
+    places[k].nums.push(i + 1); if (p.sub) places[k].subs.push(p.sub); order.push(k);
+  });
+  const n = places.length;
+  const lat0 = places.reduce((s,p) => s + p.lat, 0) / n, kx = Math.cos(lat0 * Math.PI/180);
+  let P = places.map(p => ({x:p.lng * kx, y:-p.lat}));
+  const xs = P.map(p => p.x), ys = P.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const spanX = maxX - minX, spanY = maxY - minY, bw = W - 2*padX, bh = H - padT - padB;
+  const legs = []; for (let i = 1; i < order.length; i++) if (order[i] !== order[i-1]) legs.push(distKm(places[order[i-1]], places[order[i]]));
+  const spanKm = Math.max(spanX, spanY) * 111.32, shortest = legs.length ? Math.min(...legs) : 0;
+  const geo = n > 1 && spanKm > 0.02 && spanKm / Math.max(shortest, 0.05) < 40;
+  let kmPerPx = 0;
+  if (n === 1) P = [{x:W/2, y:padT + bh/2}];
+  else if (geo) {
+    const s = Math.min(bw / (spanX || 1e-9), bh / (spanY || 1e-9));
+    const ox = padX + (bw - spanX*s)/2, oy = padT + (bh - spanY*s)/2;
+    P = P.map(p => ({x: ox + (p.x - minX)*s, y: oy + (p.y - minY)*s}));
+    kmPerPx = 111.32 / s;
+  } else {
+    const per = n <= 4 ? n : Math.ceil(n / Math.ceil(n/4)), rows = Math.ceil(n / per);
+    P = places.map((_, i) => { const r0 = Math.floor(i / per), c0 = i % per, cc = r0 % 2 ? per - 1 - c0 : c0;
+      return {x: padX + 6 + (per === 1 ? (bw-12)/2 : cc * (bw-12)/(per-1)), y: padT + (rows === 1 ? bh/2 : r0 * bh/(rows-1)) + (cc % 2 ? 12 : -12) * (rows === 1 ? 1 : .5)}; });
+  }
+  for (let it = 0; it < 90; it++) {
+    let moved = false;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      let dx = P[j].x - P[i].x, dy = P[j].y - P[i].y, d = Math.hypot(dx, dy);
+      if (d < 48) { if (d < .01) { dx = Math.cos(j*2.4); dy = Math.sin(j*2.4); d = 1; } const m = (48 - d)/2; P[i].x -= dx/d*m; P[i].y -= dy/d*m; P[j].x += dx/d*m; P[j].y += dy/d*m; moved = true; }
+    }
+    for (const p of P) { p.x = Math.max(24, Math.min(W - 24, p.x)); p.y = Math.max(padT - 8, Math.min(H - 24, p.y)); }
+    if (!moved) break;
+  }
+  const seq = order.filter((k, i) => i === 0 || k !== order[i-1]).map(k => P[k]);
+  const r = rng(seed);
+  let g = `<rect width="${W}" height="${H}" class="rm-bg"/>`;
+  for (let i = 0; i < 4; i++) g += `<ellipse cx="${f1(r()*W)}" cy="${f1(padT + r()*(H-padT))}" rx="${f1(30 + r()*60)}" ry="${f1(18 + r()*36)}" class="${i % 2 ? "rm-park" : "rm-blob"}"/>`;
+  for (let i = 0; i < 5; i++) { const y0 = r()*H, y1 = r()*H; g += `<path d="M-10 ${f1(y0)} Q${f1(100 + r()*200)} ${f1(r()*H)} ${W+10} ${f1(y1)}" class="rm-road"/>`; }
+  for (let i = 0; i < 4; i++) { const x0 = r()*W, x1 = r()*W; g += `<path d="M${f1(x0)} -10 Q${f1(r()*W)} ${f1(150)} ${f1(x1)} ${H+10}" class="rm-road"/>`; }
+  for (let x = 20; x < W; x += 40) g += `<line x1="${x}" y1="0" x2="${x}" y2="${H}" class="rm-grid"/>`;
+  for (let y = 20; y < H; y += 40) g += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" class="rm-grid"/>`;
+  const path = smoothPath(seq);
+  if (path) {
+    g += `<path id="${id}p" d="${path}" class="rm-glow"/><path d="${path}" class="rm-path"/>`;
+    if (!matchMedia("(prefers-reduced-motion:reduce)").matches) {
+      const dur = Math.max(5, seq.length * 1.6).toFixed(1);
+      g += `<circle r="10" class="rm-dot2"><animateMotion dur="${dur}s" repeatCount="indefinite"><mpath href="#${id}p"/></animateMotion></circle><circle r="4.5" class="rm-dot"><animateMotion dur="${dur}s" repeatCount="indefinite"><mpath href="#${id}p"/></animateMotion></circle>`;
+    }
+  }
+  const boxes = P.map(p => ({x:p.x - 14, y:p.y - 14, w:28, h:28}));
+  const hit = b => b.x < 4 || b.x + b.w > W - 4 || b.y < padT - 22 || b.y + b.h > H - 4 || boxes.some(o => b.x < o.x + o.w && b.x + b.w > o.x && b.y < o.y + o.h && b.y + b.h > o.y);
+  let labels = "", pins = "";
+  places.forEach((pl, i) => {
+    const p = P[i], k = pl.it && pl.it.kind in KL ? pl.it.kind : "note";
+    const subFull = trunc([...new Set(pl.subs.filter(Boolean))].join(", "), 24);
+    let pick = null;
+    for (const [nl, withSub] of [[22, true], [22, false], [14, false]]) {
+      const name = trunc(pl.label, nl), sub = withSub ? subFull : "";
+      const tw = Math.max(name.length * 6.4, sub.length * 5.5) + 4, th = sub ? 27 : 15;
+      const cands = [[p.x + 17, p.y - th/2, "start"], [p.x - 17 - tw, p.y - th/2, "end"], [p.x - tw/2, p.y - 17 - th, "middle"], [p.x - tw/2, p.y + 17, "middle"],
+        [p.x + 17, p.y - th/2 - 18, "start"], [p.x - 17 - tw, p.y - th/2 - 18, "end"], [p.x + 17, p.y - th/2 + 18, "start"], [p.x - 17 - tw, p.y - th/2 + 18, "end"]];
+      for (const [bx, by, anc] of cands) { const b = {x:bx, y:by, w:tw, h:th}; if (!hit(b)) { pick = {b, anc, name, sub, tw}; break; } }
+      if (pick) break;
+    }
+    if (pick) {
+      boxes.push(pick.b);
+      const ax = pick.anc === "start" ? pick.b.x : pick.anc === "end" ? pick.b.x + pick.tw : pick.b.x + pick.tw/2;
+      labels += `<text x="${f1(ax)}" y="${f1(pick.b.y + 11.5)}" text-anchor="${pick.anc}" class="rm-lbl">${h(pick.name)}</text>${pick.sub ? `<text x="${f1(ax)}" y="${f1(pick.b.y + 24)}" text-anchor="${pick.anc}" class="rm-sub">${h(pick.sub)}</text>` : ""}`;
+    }
+    const num = pl.nums.length > 2 ? `${pl.nums[0]}+` : pl.nums.join(",");
+    pins += `<a href="${h(placeLink({...pl, lat:pl.lat, lng:pl.lng}))}" target="_blank" rel="noopener" aria-label="${h(pl.label)} in Google Maps"><g class="rm-pin" style="--i:${i}"><g class="pop"><circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="${pl.nums.length > 1 ? 15 : 13}" class="o" style="fill:var(--k-${k})"/><text x="${f1(p.x)}" y="${f1(p.y)}" style="font-size:${num.length > 2 ? 9.5 : 11.5}px">${h(num)}</text></g></g></a>`;
+  });
+  g += labels + pins;
+  g += `<g transform="translate(${W-26} ${H-26})"><circle r="12" class="rm-cmp"/><path d="M0 -8 L4 3 L0 1 L-4 3Z" style="fill:var(--red)"/><path d="M0 8 L4 -3 L0 -1 L-4 -3Z" class="rm-cmpb"/></g>`;
+  if (geo && kmPerPx) { const sc = niceScale(kmPerPx); g += `<g transform="translate(14 ${H-16})"><path d="M0 -5 L0 0 L${f1(sc.px)} 0 L${f1(sc.px)} -5" class="rm-scale"/><text x="${f1(sc.px + 6)}" y="0" class="rm-sub" style="dominant-baseline:auto">${h(sc.label)}</text></g>`; }
+  else if (n > 1) g += `<text x="14" y="${H-12}" class="rm-sub">Not to scale</text>`;
+  return `<div class="routecard rise"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${h(head.t + ". " + places.map(p => p.label).join(", "))}">${g}</svg><div class="rm-hdr"><div><div class="t">${h(head.t)}</div><div class="s tnum">${h(head.s)}</div></div>${head.chip ? `<span class="chip solid">${h(head.chip)}</span>` : ""}</div></div>`;
+}
+
+function overviewPts(t){
+  const items = (t.items||[]).filter(i => i.start).sort((x,y) => x.start.localeCompare(y.start));
+  const pts = [];
+  const push = (lat, lng, label, it, sub) => { if (lat == null || lng == null) return; if (pts.some(p => distKm(p, {lat:+lat,lng:+lng}) < 3)) return; pts.push({lat:+lat, lng:+lng, label, it, sub}); };
+  for (const it of items) {
+    if (it.kind === "stay") push(it.lat, it.lng, it.title, it, `${fmtD(dOf(it.start),{month:"short",day:"numeric"})}${it.end?` – ${fmtD(dOf(it.end),{month:"short",day:"numeric"})}`:""}`);
+    else if (["flight","train","ferry"].includes(it.kind)) { push(it.fromLat, it.fromLng, it.from || it.title, it, fmtD(dOf(it.start),{month:"short",day:"numeric"})); push(it.toLat, it.toLng, it.to || it.title, it, fmtD(dOf(it.end||it.start),{month:"short",day:"numeric"})); }
+  }
+  if (!pts.length) return stopsFor(t, "all").pts;
+  return pts;
+}
+function viewMap(){
+  if (S.dbState === "loading") return loadingView();
+  const trips = S.mode === "trip" ? S.trips.filter(t => t.id === S.lockedTripId) : orderedTrips();
+  if (!trips.length) return `<div class="ph"><div><h1>Map</h1></div></div><div class="empty"><p>No trips yet.</p></div>`;
+  if (!S.mapTrip || !tripById(S.mapTrip)) S.mapTrip = trips[0].id;
+  const t = tripById(S.mapTrip), [a,b] = tripSpan(t);
+  const days = []; if (a) for (let d=a; d<=b; d=addDays(d,1)) days.push(d);
+  if (S.mapDay !== "all" && !days.includes(S.mapDay)) S.mapDay = "all";
+  const {pts, missing} = stopsFor(t, S.mapDay);
+  let html = `<div class="ph"><div><h1>Map</h1><div class="lede">${h(t.name)} · ${S.mapDay==="all" ? "the whole trip" : h(fmtD(S.mapDay,{weekday:"long",month:"short",day:"numeric"}))}</div></div></div>`;
+  if (S.mode === "app") html += `<div class="chips">${trips.map(x => `<button class="pick" data-maptrip="${h(x.id)}" aria-pressed="${x.id===t.id}"><span class="thumb">${coverArt(x)}</span>${h(x.name)}</button>`).join("")}</div>`;
+  if (days.length) html += `<div class="chips"><button class="pick np" data-mapday="all" aria-pressed="${S.mapDay==="all"}">Whole trip</button>${days.map((d,i) => `<button class="pick np tnum" data-mapday="${d}" aria-pressed="${S.mapDay===d}">Day ${i+1} · ${h(fmtD(d,{month:"short",day:"numeric"}))}</button>`).join("")}</div>`;
+  const findNote = missing.length ? (editable(t) && S.sample
+      ? `<div class="note-banner" style="align-items:center">${ic("locate")}<div style="flex:1">${missing.length} place${missing.length>1?"s aren't":" isn't"} located yet.</div><button class="btn sm" data-act="locate">Find them</button></div>`
+      : `<div class="note-banner">${ic("info")}<div>${missing.length} place${missing.length>1?"s don't":" doesn't"} have a location yet.</div></div>`) : "";
+
+  if (S.mapDay === "all") {
+    const ov = overviewPts(t);
+    html += findNote;
+    html += `<div class="mapcard rise" style="margin-top:12px"><div id="mapslot" style="position:absolute;inset:0"></div>${!ov.length ? `<div class="mapnote"><span class="tx">Nothing with a location yet.</span></div>` : ""}</div><div class="credit">Outlines: Natural Earth · pick a day to see its route</div>`;
+    if (ov.length) html += `<div class="sec">Where you'll be</div><div class="card">${ov.map((p,i) => { const k = p.it.kind in KL ? p.it.kind : "note";
+      return `<button class="row" data-trip="${h(t.id)}" data-item="${h(p.it.id)}"><span class="stop-n" style="background:var(--k-${k})">${i+1}</span><span class="body"><div class="t">${h(p.label)}</div><div class="s tnum">${h(p.sub||"")}</div></span></button>`; }).join("")}</div>`;
+    return html;
+  }
+
+  const di = days.indexOf(S.mapDay) + 1;
+  let total = 0; for (let i = 1; i < pts.length; i++) total += distKm(pts[i-1], pts[i]);
+  const dayItems = (t.items||[]).filter(i => i.start && dOf(i.start) === S.mapDay);
+  if (pts.length) html += routeMap(pts, t.id + S.mapDay, {t:`Day ${di} route`, s:`${pts.length} stop${pts.length===1?"":"s"}${pts.length>1?` · ${fmtDist(total)} in all`:""}`, chip: fmtD(S.mapDay,{weekday:"short",month:"short",day:"numeric"})});
+  else html += `<div class="dayhero rise"><div class="art">${dayArt(t, S.mapDay, dayItems)}</div><div class="scrim"></div><div class="lbl"><div class="d1">Day ${di}</div><div class="d2 tnum">${h(fmtD(S.mapDay,{weekday:"long",month:"short",day:"numeric"}))}</div></div></div>`;
+  if (pts.length) html += `<a class="gmbtn" href="${h(gmapsDay(pts))}" target="_blank" rel="noopener">${ic("map")}Open Day ${di} in Google Maps</a><p class="hint" style="text-align:center">Shows every stop in order with live directions.</p>`;
+  html += findNote;
+  if (!pts.length) return html + `<div class="note-banner">${ic("info")}<div>${dayItems.length ? "Find the places for this day to see the route." : "Nothing planned this day yet."}</div></div>`;
+  html += `<div class="card rt rise" style="--i:1;margin-top:14px">`;
+  pts.forEach((p,i) => {
+    const k = p.it.kind in KL ? p.it.kind : "note";
+    if (i > 0) { const L = legInfo(pts[i-1], p); html += `<div class="leg"><span class="rail"><i></i></span><span class="info">${ic(L.icon)}${h(L.text)}</span></div>`; }
+    const sub = [p.sub, p.label !== p.it.title ? p.it.title : (p.it.location || "")].filter(Boolean).join(" · ");
+    html += `<div class="stop"><span class="stop-n" style="background:var(--k-${k})">${i+1}</span><button class="body" style="text-align:left" data-trip="${h(t.id)}" data-item="${h(p.it.id)}"><div class="t">${h(p.label)}</div><div class="s tnum">${h(sub)}</div></button><a class="go" href="${h(placeLink(p))}" target="_blank" rel="noopener">Directions</a></div>`;
+  });
+  html += `</div><p class="hint">Tap any place for Google Maps. Distances are straight-line estimates; Google Maps has the real route and timing.</p>`;
+  return html;
+}
+async function mountMap(){
+  const slot = document.getElementById("mapslot"); if (!slot) return;
+  if (!window.L) { slot.innerHTML = `<div class="mapnote"><span class="tx">The map couldn't load. Check your connection and reopen this tab.</span></div>`; return; }
+  if (!mapEl) { mapEl = document.createElement("div"); mapEl.id = "mapbox"; }
+  slot.appendChild(mapEl);
+  if (!MAP) {
+    MAP = L.map(mapEl, {zoomControl:true, attributionControl:false, worldCopyJump:false, minZoom:2, maxZoom:16, zoomSnap:.25});
+    MAP.setView([25, 60], 2);
+    try {
+      const res = await fetch("world.json"); const geo = await res.json();
+      L.geoJSON(geo, {style:() => ({className:"land"}), interactive:false}).addTo(MAP); landLoaded = true;
+    } catch { toast("Couldn't load the map outlines."); }
+  }
+  setTimeout(() => { MAP.invalidateSize(); drawRoute(); }, 30);
+}
+function drawRoute(){
+  if (!MAP) return; const t = tripById(S.mapTrip); if (!t) return;
+  if (mapLayer) mapLayer.remove();
+  mapLayer = L.layerGroup().addTo(MAP);
+  const pts = overviewPts(t);
+  if (!pts.length) { MAP.setView([25,60],2); return; }
+  const ll = pts.map(p => [p.lat, p.lng]);
+  if (ll.length > 1) { L.polyline(ll, {className:"route-glow", interactive:false}).addTo(mapLayer); L.polyline(ll, {className:"route", interactive:false}).addTo(mapLayer); }
+  pts.forEach((p,i) => { const k = p.it.kind in KL ? p.it.kind : "note";
+    L.marker([p.lat,p.lng], {icon:L.divIcon({className:"pin", html:`<span style="background:var(--k-${k});--i:${i}">${i+1}</span>`, iconSize:[28,28], iconAnchor:[14,14]}), keyboard:true, title:p.label})
+      .bindTooltip(h(p.label.length > 26 ? p.label.slice(0,25) + "…" : p.label), {permanent:true, direction:i % 2 ? "left" : "right", offset:[i % 2 ? -14 : 14, 0], className:"lbl"})
+      .bindPopup(`<b>${h(p.label)}</b><br>${h(p.sub||"")}<br><a href="${h(placeLink(p))}" target="_blank" rel="noopener">Open in Google Maps</a>`).addTo(mapLayer); });
+  if (ll.length === 1) MAP.setView(ll[0], 8); else MAP.fitBounds(ll, {padding:[60,60], maxZoom:9});
+}
+async function locate(){
+  const t = tripById(S.mapTrip); if (!t || !S.sample) return;
+  const need = (t.items||[]).filter(i => i.kind !== "note" && (MOVING.has(i.kind) ? (i.fromLat == null || i.toLat == null) : i.lat == null));
+  if (!need.length) return;
+  const btn = document.querySelector('[data-act="locate"]'); if (btn) { btn.disabled = true; btn.innerHTML = `<span class="spinner" style="width:14px;height:14px;border-color:rgba(255,255,255,.4);border-top-color:#fff"></span>Finding…`; }
+  const list = need.map(i => MOVING.has(i.kind) ? {id:i.id, type:"travel", from:i.from, to:i.to, title:i.title, near:i.location, tz:i.tz, arrivalTz:i.endTz} : {id:i.id, type:i.kind, name:i.title, address:i.location, tz:i.tz});
+  const prompt = `You geocode places for a travel planner. Trip: "${t.name}". For each entry give your best-known coordinates (WGS84 decimal degrees). Airport codes mean that airport. For "travel" entries return both ends. If a place is vague (like "Shenzhen hotel (TBD)"), use the city or district center. Use the time zone as a hint to the region. Reply with JSON only, shaped like {"<id>":{"lat":0,"lng":0}} for places and {"<id>":{"from":{"lat":0,"lng":0},"to":{"lat":0,"lng":0}}} for travel. Use null for anything you truly cannot place.\n\nEntries:\n${JSON.stringify(list)}`;
+  try {
+    const out = await S.sample.json(prompt, {modelTier:"default"});
+    let n = 0;
+    const items = (t.items||[]).map(i => { const g = out && out[i.id]; if (!g) return i; const c = {...i};
+      const ok = v => v && typeof v.lat === "number" && typeof v.lng === "number" && Math.abs(v.lat) <= 90 && Math.abs(v.lng) <= 180;
+      if (MOVING.has(i.kind)) { if (ok(g.from) && c.fromLat == null) { c.fromLat = g.from.lat; c.fromLng = g.from.lng; n++; } if (ok(g.to) && c.toLat == null) { c.toLat = g.to.lat; c.toLng = g.to.lng; } }
+      else if (ok(g) && c.lat == null) { c.lat = g.lat; c.lng = g.lng; n++; }
+      return c; });
+    await persist({...t, items}); toast(n ? `Placed ${n} on the map` : "Couldn't place those yet");
+  } catch (e) { toast(e && e.code === "not_granted" ? "Allow Claude for this page to find places." : e && e.code === "rate_limited" ? "Too many requests. Try again in a minute." : "Couldn't find those places right now."); render(); }
+}
+
+/* ======================= render ======================= */
+const TABS_APP = [["trips","Trips","trips"],["map","Map","map"],["tobook","To Book","check"],["inbox","Inbox","inbox"]];
+const TABS_SHARE = [["trips","Trips","trips"],["map","Map","map"]];
+const TABS_TRIP = [["trips","Plan","trips"],["map","Map","map"],["tobook","To Book","check"]];
+function render(){
+  if (!S.mode) { app.innerHTML = loadingView(); bar.innerHTML = ""; return; }
+  if (S.mode === "trip") { S.tripId = S.lockedTripId; S.mapTrip = S.lockedTripId; S.expTrip = S.lockedTripId; }
+  const tabs = S.mode === "trip" ? TABS_TRIP : S.mode === "share" ? TABS_SHARE : TABS_APP;
+  if (!tabs.some(x => x[0] === S.tab)) S.tab = "trips";
+  let html;
+  if (S.tab === "trips") { const t = S.tripId && tripById(S.tripId); html = t ? viewTripDetail(t) : (S.mode === "trip" ? (S.dbState==="loading" ? loadingView() : `<div class="empty"><h2>Trip not found</h2><p>This shared trip may have been removed.</p></div>`) : viewTrips()); }
+  else if (S.tab === "map") html = viewMap();
+  else if (S.tab === "tobook") html = viewToBook();
+  else html = viewInbox();
+  if (mapEl && mapEl.parentNode) mapEl.remove();
+  const keepChips = S.tab === S._lastTab ? [...app.querySelectorAll(".chips")].map(c => c.scrollLeft) : [];
+  app.innerHTML = html;
+  S._lastTab = S.tab;
+  app.querySelectorAll(".chips").forEach((c, i) => {
+    if (keepChips[i] != null) c.scrollLeft = keepChips[i];
+    const on = c.querySelector('[aria-pressed="true"]'); if (!on) return;
+    const cr = c.getBoundingClientRect(), or = on.getBoundingClientRect();
+    if (or.left < cr.left || or.right > cr.right) c.scrollLeft += (or.left - cr.left) - (cr.width - or.width) / 2;
+  });
+  if (S.tab === "map") mountMap();
+  const unread = S.inbox.filter(inboxPending).length;
+  bar.innerHTML = tabs.map(([k,l,i]) => `<button class="tab" data-tab="${k}" ${S.tab===k?'aria-current="page"':""}>${ic(i)}<span>${l}</span>${k==="inbox"&&unread?`<span class="dot">${unread}</span>`:""}</button>`).join("");
+  onScroll();
+}
+function onScroll(){ const art = document.querySelector(".hero-wrap .art"); if (!art) return; const y = window.scrollY; art.style.transform = y > 0 ? `translateY(${y*0.35}px) scale(${1 + y/1600})` : `scale(${1 + Math.min(-y,200)/400})`; }
+window.addEventListener("scroll", onScroll, {passive:true});
+
+bar.addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (b) setTab(b.dataset.tab); });
+app.addEventListener("click", e => {
+  const el = e.target.closest("[data-open],[data-act],[data-item],[data-add-day],[data-booked],[data-hold],[data-unhold],[data-booktrip],[data-noted],[data-remove],[data-keep],[data-addstay],[data-maptrip],[data-mapday],[data-exptrip],[data-ok],[data-tent],[data-ignore],[data-ignore-yes],[data-ignore-cancel],[data-attach],[data-finalize]");
+  if (!el || el.disabled) return;
+  if (el.dataset.open) return openTrip(el.dataset.open, el);
+  if (el.dataset.maptrip) { S.mapTrip = el.dataset.maptrip; S.mapDay = "all"; LS.set("trips.mapTrip", S.mapTrip); return render(); }
+  if (el.dataset.mapday) { S.mapDay = el.dataset.mapday; return render(); }
+  if (el.dataset.exptrip) { S.expTrip = el.dataset.exptrip; return render(); }
+  if (el.dataset.booktrip) { S.bookTrip = el.dataset.booktrip; return render(); }
+  if (el.dataset.ok) return inboxOk(el.dataset.ok);
+  if (el.dataset.tent) return inboxTentative(el.dataset.tent);
+  if (el.dataset.ignore) { S.ignoring = el.dataset.ignore; return render(); }
+  if (el.dataset.ignoreCancel) { S.ignoring = null; return render(); }
+  if (el.dataset.ignoreYes) return inboxIgnore(el.dataset.ignoreYes);
+  if (el.dataset.attach) return inboxAttach(el.dataset.attach);
+  if (el.dataset.noted) { const m = inboxEntry(el.dataset.noted); if (m) { resolveEntry(m, "noted"); toast("Noted"); } return; }
+  if (el.dataset.keep) { const m = inboxEntry(el.dataset.keep); if (m) { const {t, it} = entryTrip(m); if (it && it.review) updateItem(t, it.id, {review:false}); resolveEntry(m, "kept"); toast("Kept on the To Book list"); } return; }
+  if (el.dataset.remove) { const m = inboxEntry(el.dataset.remove); if (m) { const {t, it} = entryTrip(m); if (t && it && !mirror(t)) persist({...t, items:(t.items||[]).filter(i => i.id !== it.id)}); resolveEntry(m, "removed"); toast(`Removed from ${m.tripName || "the trip"}`); } return; }
+  if (el.dataset.finalize) { updateItem(tripById(el.dataset.trip), el.dataset.finalize, {tentative:false}); return toast("Finalized"); }
+  if (el.dataset.booked) return markBooked(tripById(el.dataset.trip), el.dataset.booked);
+  if (el.dataset.hold) { updateItem(tripById(el.dataset.trip), el.dataset.hold, {hold:true}); return toast("Moved to Maybe"); }
+  if (el.dataset.unhold) { updateItem(tripById(el.dataset.trip), el.dataset.unhold, {hold:false, tbd:true, tentative:false}); return toast("Back on the To Book list"); }
+  if (el.dataset.addstay) { const [s,en] = el.dataset.addstay.split("|"); return editItem(tripById(el.dataset.trip), null, {kind:"stay", start:s+"T15:00", end:en+"T11:00"}); }
+  const tid = el.dataset.trip || S.tripId, t = tripById(tid);
+  if (el.dataset.openmail) { if (el.dataset.item && (t.items||[]).some(i => i.id === el.dataset.item)) return openItem(t, el.dataset.item); return openTrip(tid); }
+  if (el.dataset.item) return openItem(t, el.dataset.item);
+  if (el.dataset.addDay) return editItem(t, null, {start: el.dataset.addDay + "T"});
+  switch (el.dataset.act) {
+    case "back": return closeTrip();
+    case "new-trip": return editTrip(null);
+    case "edit-trip": return editTrip(t);
+    case "add-item": return editItem(t, null);
+    case "share": return openShare(t);
+    case "goto-map": S.mapTrip = t.id; S.mapDay = "all"; return setTab("map");
+    case "goto-tobook": return setTab("tobook");
+    case "locate": return locate();
+    case "review-all": return reviewAll();
+  }
+});
+
+/* ======================= sheet ======================= */
+let sheetEl, scrimEl, lastFocus;
+function openSheet(html, mount){
+  closeSheet(true); lastFocus = document.activeElement;
+  scrimEl = document.createElement("div"); scrimEl.className = "scrimx";
+  sheetEl = document.createElement("div"); sheetEl.className = "sheet"; sheetEl.setAttribute("role","dialog"); sheetEl.setAttribute("aria-modal","true");
+  sheetEl.innerHTML = `<div class="grab"></div>` + html;
+  document.body.append(scrimEl, sheetEl);
+  scrimEl.onclick = () => closeSheet();
+  requestAnimationFrame(() => { scrimEl.classList.add("on"); sheetEl.classList.add("on"); });
+  document.body.style.overflow = "hidden";
+  mount && mount(sheetEl);
+  const f = sheetEl.querySelector("[autofocus]"); if (f && matchMedia("(hover:hover)").matches) setTimeout(() => f.focus(), 300);
+}
+function setSheet(html, mount){ if (!sheetEl) return openSheet(html, mount); sheetEl.innerHTML = `<div class="grab"></div>` + html; mount && mount(sheetEl); }
+function closeSheet(instant){
+  if (!sheetEl) return; const s = sheetEl, c = scrimEl; sheetEl = scrimEl = null; document.body.style.overflow = "";
+  if (instant) { s.remove(); c.remove(); return; }
+  s.classList.remove("on"); c.classList.remove("on"); setTimeout(() => { s.remove(); c.remove(); }, 420);
+  if (lastFocus && lastFocus.isConnected) lastFocus.focus();
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape" && sheetEl) closeSheet(); });
+const shead = (l, title, r) => `<div class="shead"><div>${l}</div><div class="ttl">${h(title)}</div><div style="text-align:right">${r}</div></div>`;
+
+/* ---------- trip form ---------- */
+function resizeImage(file){
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => { const max = 1100, sc = Math.min(1, max / Math.max(img.width, img.height)); const c = document.createElement("canvas"); c.width = Math.round(img.width*sc); c.height = Math.round(img.height*sc);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      let q = .8, out = c.toDataURL("image/jpeg", q); while (out.length > 230000 && q > .35) { q -= .1; out = c.toDataURL("image/jpeg", q); } res(out); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("bad image")); };
+    img.src = url;
+  });
+}
+function editTrip(t, seed, onCreated){
+  const isNew = !t;
+  const d = t ? {...t} : {name:"", startDate:"", endDate:"", notes:"", people:["Me"], items:[], ...(seed||{})};
+  let sc = d.scene || "";
+  let photo = t && S.photos[t.id] ? S.photos[t.id].data : null, photoChanged = false;
+  const people = (d.people && d.people.length ? d.people : ["Me"]).filter(p => p !== "Me");
+  openSheet(`${shead(`<button class="tb" data-x="cancel">Cancel</button>`, isNew ? "New Trip" : "Edit Trip", `<button class="tb r" data-x="save">${isNew?"Create":"Done"}</button>`)}
+    <form class="scontent" id="tf" novalidate>
+      <div class="photo-prev" id="pp" style="margin:6px 0 0"></div>
+      <div class="actions" style="margin-top:10px"><label class="btn soft sm" style="cursor:pointer">${ic("photo")}<span>${photo?"Change Photo":"Add Your Photo"}</span><input type="file" id="t-photo" accept="image/*" hidden></label><button type="button" class="btn soft sm" data-x="nophoto" ${photo?"":"hidden"}>Use Illustration</button></div>
+      <div class="slbl">Illustration</div><div class="chips" id="t-scene">${SCENES.map(([v,l]) => `<button type="button" class="pick np" data-sc="${v}" aria-pressed="${sc===v}">${l}</button>`).join("")}</div>
+      <div class="fields" style="margin-top:10px"><div class="f"><input id="t-name" placeholder="Where are you going?" style="text-align:left;font-family:var(--serif);font-size:20px;font-weight:650" value="${h(d.name)}" autofocus autocomplete="off" aria-label="Trip name"></div></div>
+      <p class="hint">Name it by place, like “Lisbon” or “Japan & Korea”. The dates show under the name.</p>
+      <div class="slbl">Dates</div>
+      <div class="fields"><div class="f"><label for="t-start">Starts</label><input id="t-start" type="date" value="${h(d.startDate)}"></div><div class="f"><label for="t-end">Ends</label><input id="t-end" type="date" value="${h(d.endDate)}"></div></div>
+      <div class="slbl">Travelers</div>
+      <div class="fields"><div class="f"><label for="t-people">With</label><input id="t-people" placeholder="Johnny, Alex" value="${h(people.join(", "))}" autocomplete="off"></div></div>
+      <p class="hint">You're always included.</p>
+      <div class="slbl">Notes</div>
+      <div class="fields"><div class="f stack"><textarea id="t-notes" placeholder="Ideas, reminders, anything to remember">${h(d.notes)}</textarea></div></div>
+      ${isNew ? "" : `<div style="margin-top:28px" id="del-zone"><button type="button" class="btn danger block" data-x="del">Delete Trip</button></div>`}
+    </form>`, el => {
+      const prev = () => { const nm = el.querySelector("#t-name")?.value || d.name || ""; const ty = sc || tripType({...d, name:nm, scene:""});
+        el.querySelector("#pp").innerHTML = `<div class="art">${photo ? `<img src="${h(photo)}" alt="">` : scene(d.id || "new", ty, {text:nm})}</div>`; };
+      prev();
+      let tmr; el.querySelector("#t-name").addEventListener("input", () => { if (photo) return; clearTimeout(tmr); tmr = setTimeout(prev, 350); });
+      el.querySelector("#t-photo").addEventListener("change", async e => { const f = e.target.files[0]; if (!f) return; try { photo = await resizeImage(f); photoChanged = true; prev(); el.querySelector('[data-x="nophoto"]').hidden = false; } catch { toast("That image couldn't be opened. Try a JPEG or PNG."); } });
+      el.onclick = e => { const b = e.target.closest("[data-x],[data-sc]"); if (!b) return; const x = b.dataset.x;
+        if (b.dataset.sc !== undefined) { sc = b.dataset.sc; el.querySelectorAll("[data-sc]").forEach(y => y.setAttribute("aria-pressed", y.dataset.sc === sc)); prev(); return; }
+        if (x === "cancel") return closeSheet();
+        if (x === "nophoto") { photo = null; photoChanged = true; b.hidden = true; prev(); return; }
+        if (x === "del") { el.querySelector("#del-zone").innerHTML = `<p class="hint" style="text-align:center;padding-bottom:6px">Delete “${h(d.name)}” and everything in it? This can't be undone.</p><div class="confirm"><button type="button" class="btn soft" data-x="keep">Keep</button><button type="button" class="btn" style="background:var(--red);color:#fff" data-x="del-yes">Delete</button></div>`; return; }
+        if (x === "keep") { el.querySelector("#del-zone").innerHTML = `<button type="button" class="btn danger block" data-x="del">Delete Trip</button>`; return; }
+        if (x === "del-yes") { closeSheet(); removeTrip(d.id); toast("Trip deleted"); return; }
+        if (x === "save") save(); };
+      el.querySelector("#tf").onsubmit = e => { e.preventDefault(); save(); };
+      function save(){
+        const name = el.querySelector("#t-name").value.trim().replace(/\s+\+\s+/g, " & ").replace(/\s{2,}/g, " ");
+        if (!name) { const n = el.querySelector("#t-name"); n.focus(); n.placeholder = "Give your trip a name"; return; }
+        let s = el.querySelector("#t-start").value, en = el.querySelector("#t-end").value; if (s && en && en < s) [s,en] = [en,s];
+        const ppl = ["Me", ...el.querySelector("#t-people").value.split(/[,，、]/).map(x => x.trim()).filter(x => x && !/^(me|you)$/i.test(x))];
+        const out = {...d, name, scene:sc, startDate:s, endDate:en || s, notes:el.querySelector("#t-notes").value.trim(), people:[...new Set(ppl)]};
+        if (isNew) out.id = uid();
+        closeSheet(); persist(out);
+        if (photoChanged) { if (photo) { S.photos[out.id] = {data:photo}; queue(() => S.db.collection("photos").doc(out.id).set({data:photo, updatedAt:Date.now()}), "Couldn't save the photo."); } else { delete S.photos[out.id]; queue(() => S.db.collection("photos").doc(out.id).delete()); } render(); }
+        if (isNew) { if (onCreated) onCreated(out); openTrip(out.id); }
+      }
+    });
+}
+
+/* ---------- item detail ---------- */
+function openItem(t, id){
+  if (!t) return; const it = (t.items||[]).find(i => i.id === id); if (!it) return;
+  const k = it.kind in KL ? it.kind : "note", ed = editable(t);
+  const rows = []; const add = (key,val) => val && rows.push(`<div class="row"><span class="k">${key}</span><span class="v">${h(val)}</span></div>`);
+  const when = s => s ? `${fmtD(dOf(s),{weekday:"short",month:"short",day:"numeric",year:"numeric"})}${tOf(s)?` · ${fmtT(s)}`:""}` : "";
+  let hero = "";
+  if (MOVING.has(k) && (it.from || it.to)) hero = `<div class="card" style="margin-top:14px"><div class="route"><div class="end"><div class="code">${h(it.from||"—")}</div><div class="when tnum">${h(it.start?`${fmtD(dOf(it.start),{month:"short",day:"numeric"})}${tOf(it.start)?" · "+fmtT(it.start):""}`:"")}</div><div class="tz">${h(tzCity(it.tz))}</div></div><div class="mid">${ic("arrow")}</div><div class="end r"><div class="code">${h(it.to||"—")}</div><div class="when tnum">${h(it.end?`${fmtD(dOf(it.end),{month:"short",day:"numeric"})}${tOf(it.end)?" · "+fmtT(it.end):""}`:"")}</div><div class="tz">${h(tzCity(it.endTz||it.tz))}</div></div></div></div>`;
+  else { add(k==="stay"?"Check in":"Starts", when(it.start)); add(k==="stay"?"Check out":"Ends", when(it.end)); add("Time zone", tzCity(it.tz)); }
+  add("Address", it.location); add(k==="flight"?"Airline":"Company", it.company); add(k==="flight"?"Flight":"Number", it.number); add("Confirmation", it.confirmation);
+  openSheet(`${shead(`<button class="tb" data-x="close">Close</button>`, KL[k], ed ? `<button class="tb r" data-x="edit">Edit</button>` : "")}
+    <div class="scontent">
+      <div class="dhead"><span class="ico" style="background:var(--k-${k});color:var(--k-${k})">${ic(k)}</span><div style="min-width:0"><h2>${h(it.title||KL[k])}</h2><div style="margin-top:6px">${it.walkin?`<span class="tag hold">Walk-in · book on arrival</span>`:it.hold?`<span class="tag hold">Maybe · not booking yet</span>`:it.tbd?`<span class="tag tbd">Not booked yet</span>`:it.tentative?`<span class="tag tent">Tentative</span>`:`<span class="tag" style="background:var(--green-soft);color:var(--green)">Booked</span>`}${it.review?`<span class="tag gm">Added from Gmail</span>`:""}</div></div></div>
+      ${hero}${rows.length ? `<div class="card kv" style="margin-top:14px">${rows.join("")}</div>` : ""}
+      ${it.notes ? `<div class="slbl">Notes</div><div class="card"><div class="notes">${h(it.notes)}</div></div>` : ""}
+      ${ed && it.tbd && !it.hold ? `<div class="actions"><button class="btn block" data-x="booked">${ic("check")}Mark as Booked</button></div>` : ""}
+      ${ed && !it.hold && (it.tbd || it.tentative) ? `<div class="actions"><button class="btn soft block" data-x="hold">Maybe · don't book yet</button></div>` : ""}
+      ${ed && it.hold ? `<div class="actions"><button class="btn block" data-x="unhold">Move back to To Book</button></div>` : ""}
+      ${ed && !it.tbd && it.tentative ? `<div class="actions"><button class="btn block" data-x="final">${ic("check")}Finalize</button></div>` : ""}
+      ${ed && it.review ? `<div class="actions"><button class="btn soft" style="flex:1" data-x="ok">Looks right</button><button class="btn soft" style="flex:1" data-x="tent">Tentative</button></div>` : ""}
+    </div>`, el => { el.onclick = e => { const b = e.target.closest("[data-x]"); if (!b) return;
+      if (b.dataset.x === "close") closeSheet();
+      if (b.dataset.x === "edit") editItem(t, it, null, true);
+      if (b.dataset.x === "booked") markBooked(t, it.id);
+      if (b.dataset.x === "hold") { closeSheet(); updateItem(t, it.id, {hold:true}); toast("Moved to Maybe"); }
+      if (b.dataset.x === "unhold") { closeSheet(); updateItem(t, it.id, {hold:false, tbd:true, tentative:false}); toast("Back on the To Book list"); }
+      if (b.dataset.x === "final") { closeSheet(); updateItem(t, it.id, {tentative:false}); toast("Finalized"); }
+      if (b.dataset.x === "ok" || b.dataset.x === "tent") { closeSheet(); const m = S.inbox.find(m => m.itemId === it.id && inboxPending(m));
+        if (m) { b.dataset.x === "ok" ? inboxOk(m.id) : inboxTentative(m.id); }
+        else { updateItem(t, it.id, b.dataset.x === "ok" ? {review:false} : {review:false, tentative:true, tbd:false}); toast(b.dataset.x === "ok" ? "Confirmed" : "Marked tentative"); } } }; });
+}
+function updateItem(t, id, patch){ return persist({...t, items:(t.items||[]).map(i => i.id === id ? {...i, ...patch} : i)}); }
+function markBooked(t, id){
+  const it = t && (t.items||[]).find(i => i.id === id); if (!it) return;
+  openSheet(`${shead(`<button class="tb" data-x="cancel">Cancel</button>`, "Mark as Booked", `<button class="tb r" data-x="save">Done</button>`)}
+    <form class="scontent" id="bf" novalidate><p style="margin:6px 4px 14px;font-weight:600">${h(it.title)}</p>
+      <div class="fields"><div class="f"><label for="b-conf">Confirmation</label><input id="b-conf" placeholder="Optional" value="${h(it.confirmation||"")}" autocomplete="off" autofocus></div>
+</div></form>`, el => {
+      const save = () => { const conf = el.querySelector("#b-conf").value.trim();
+        const patch = {tbd:false, tentative:false, confirmation:conf || it.confirmation || ""};
+        if (!it.people || !it.people.length) patch.people = t.people && t.people.length ? t.people.slice() : ["Me"];
+        closeSheet(); updateItem(t, id, patch); toast("Marked as booked"); };
+      el.onclick = e => { const b = e.target.closest("[data-x]"); if (!b) return; if (b.dataset.x === "cancel") closeSheet(); if (b.dataset.x === "save") save(); };
+      el.querySelector("#bf").onsubmit = e => { e.preventDefault(); save(); }; });
+}
+
+/* ---------- item form ---------- */
+function editItem(t, it, preset, inPlace){
+  if (!t) return; const isNew = !it;
+  const lastTz = (t.items||[]).map(i=>i.tz).filter(Boolean).pop() || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const d = it ? {...it} : {kind:"activity", title:"", start:(t.startDate?t.startDate+"T":""), end:"", tz:lastTz, endTz:"", from:"", to:"", company:"", number:"", location:"", confirmation:"", notes:"", tbd:false, cost:null, people:(t.people&&t.people.length?t.people.slice():["Me"]), ...(preset||{})};
+  const tzs = [...new Set([...S.trips.flatMap(x => (x.items||[]).flatMap(i => [i.tz, i.endTz])), lastTz].filter(Boolean))].sort();
+  let people = [...new Set([...(t.people||["Me"]), ...(d.people||[])])]; if (!people.includes("Me")) people.unshift("Me");
+  let joined = new Set(d.people && d.people.length ? d.people : ["Me"]);
+  const html = `${shead(`<button class="tb" data-x="cancel">Cancel</button>`, isNew ? "Add to Trip" : "Edit", `<button class="tb r" data-x="save">${isNew?"Add":"Done"}</button>`)}
+    <form class="scontent" id="if" novalidate>
+      <div class="kinds" role="group" aria-label="Type">${KINDS.map(([k,l])=>`<button type="button" class="kind" data-k="${k}" aria-pressed="${k===d.kind}"><span class="ico" style="background:var(--k-${k});color:var(--k-${k})">${ic(k)}</span>${l}</button>`).join("")}</div>
+      <div class="fields" style="margin-top:18px">
+        <div class="f"><input id="i-title" aria-label="Title" placeholder="Title" style="text-align:left;font-weight:600" value="${h(d.title)}" autocomplete="off" ${isNew?"autofocus":""}></div>
+        <div class="f" data-for="move"><label for="i-from">From</label><input id="i-from" placeholder="JFK, Shenzhen…" value="${h(d.from)}"></div>
+        <div class="f" data-for="move"><label for="i-to">To</label><input id="i-to" placeholder="HKG, hotel…" value="${h(d.to)}"></div>
+        <div class="f"><label for="i-loc">Address</label><input id="i-loc" placeholder="Optional" value="${h(d.location)}"></div></div>
+      <div class="slbl">When</div>
+      <div class="fields">
+        <div class="f"><label id="l-start">Starts</label><div class="pair"><input id="i-sd" type="date" aria-labelledby="l-start" value="${h(dOf(d.start))}"><input id="i-st" type="time" aria-label="Start time" value="${h(tOf(d.start))}"></div></div>
+        <div class="f"><label id="l-end">Ends</label><div class="pair"><input id="i-ed" type="date" aria-labelledby="l-end" value="${h(dOf(d.end))}"><input id="i-et" type="time" aria-label="End time" value="${h(tOf(d.end))}"></div></div>
+        <div class="f"><label for="i-tz">Time zone</label><input id="i-tz" list="tzl" value="${h(d.tz)}" placeholder="Asia/Shanghai"></div>
+        <div class="f" data-for="move"><label for="i-etz">Arrival zone</label><input id="i-etz" list="tzl" value="${h(d.endTz)}" placeholder="Same as departure"></div></div>
+      <datalist id="tzl">${tzs.map(z=>`<option value="${h(z)}">`).join("")}</datalist>
+      <div class="slbl">Booking</div>
+      <div class="fields">
+        <div class="f"><label id="l-st" style="width:auto">Status</label><div class="seg" role="group" aria-labelledby="l-st">${[["booked","Booked"],["tentative","Tentative"],["tbd","Not booked"],["hold","Maybe"],["walkin","Walk-in"]].map(([v,l]) => `<button type="button" data-st="${v}" aria-pressed="${itemState(d)===v}">${l}</button>`).join("")}</div></div>
+        <div class="f" data-for="carrier"><label for="i-co">Company</label><input id="i-co" placeholder="Optional" value="${h(d.company)}"></div>
+        <div class="f" data-for="carrier"><label for="i-no">Number</label><input id="i-no" placeholder="CX831" value="${h(d.number)}"></div>
+        <div class="f"><label for="i-conf">Confirmation</label><input id="i-conf" placeholder="Optional" value="${h(d.confirmation)}" autocomplete="off"></div></div>
+      <div class="slbl">Travelers</div>
+      <div class="fields">
+        <div class="f stack" style="padding:10px 0 4px"><span style="padding:0 16px;font-size:14px;color:var(--ink2)">Who joined</span><div class="people" id="ppl"></div></div></div>
+      <div class="slbl">Notes</div>
+      <div class="fields"><div class="f stack"><textarea id="i-notes" aria-label="Notes" placeholder="Tips, links, what to bring">${h(d.notes)}</textarea></div></div>
+      ${isNew ? "" : `<div style="margin-top:28px" id="del-zone"><button type="button" class="btn danger block" data-x="del">Delete</button></div>`}
+    </form>`;
+  const mount = el => {
+    let kind = d.kind, stt = itemState(d);
+    const drawPeople = () => { el.querySelector("#ppl").innerHTML = people.map(p => `<button type="button" class="person" data-p="${h(p)}" aria-pressed="${joined.has(p)}">${h(nameOf(p))}</button>`).join("") + `<button type="button" class="person add" data-x="addp">${ic("plus",'style="width:14px;height:14px"')}Add</button>`; };
+    drawPeople();
+    const sync = () => {
+      el.querySelectorAll(".kind").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === kind));
+      const mv = MOVING.has(kind);
+      el.querySelectorAll('[data-for="move"]').forEach(f => f.hidden = !mv);
+      el.querySelectorAll('[data-for="carrier"]').forEach(f => f.hidden = !(mv || kind === "stay"));
+      el.querySelector("#l-start").textContent = kind==="stay" ? "Check in" : mv ? "Departs" : "Starts";
+      el.querySelector("#l-end").textContent = kind==="stay" ? "Check out" : mv ? "Arrives" : "Ends";
+      el.querySelector("#i-title").placeholder = {flight:"Flight to Hong Kong", stay:"Hotel name", dining:"Restaurant", note:"Reminder", train:"Train to Fes", transfer:"Car to hotel", ferry:"Ferry", activity:"Museum, tour, show…"}[kind];
+    };
+    sync();
+    el.onclick = e => {
+      const b = e.target.closest("[data-x],[data-k],[data-p],[data-st]"); if (!b) return;
+      if (b.dataset.st) { stt = b.dataset.st; el.querySelectorAll("[data-st]").forEach(x => x.setAttribute("aria-pressed", x.dataset.st === stt)); return; }
+      if (b.dataset.k) { kind = b.dataset.k; sync(); return; }
+      if (b.dataset.p) { const p = b.dataset.p; joined.has(p) ? joined.delete(p) : joined.add(p); b.setAttribute("aria-pressed", joined.has(p)); return; }
+      const x = b.dataset.x;
+      if (x === "addp") { const zone = el.querySelector("#ppl"); if (zone.querySelector("#np")) return; b.insertAdjacentHTML("beforebegin", `<input id="np" class="person" style="width:120px;border:0;outline:none" placeholder="Name" aria-label="New person's name">`); const np = zone.querySelector("#np"); np.focus();
+        const commit = () => { const v = np.value.trim(); if (v && !/^(me|you)$/i.test(v) && !people.includes(v)) { people.push(v); joined.add(v); } drawPeople(); };
+        np.addEventListener("keydown", ev => { if (ev.key === "Enter") { ev.preventDefault(); commit(); } }); np.addEventListener("blur", commit); return; }
+      if (x === "cancel") return inPlace ? openItem(t, it.id) : closeSheet();
+      if (x === "del") { el.querySelector("#del-zone").innerHTML = `<div class="confirm"><button type="button" class="btn soft" data-x="keep">Keep</button><button type="button" class="btn" style="background:var(--red);color:#fff" data-x="del-yes">Delete</button></div>`; return; }
+      if (x === "keep") { el.querySelector("#del-zone").innerHTML = `<button type="button" class="btn danger block" data-x="del">Delete</button>`; return; }
+      if (x === "del-yes") { closeSheet(); persist({...t, items:(t.items||[]).filter(i => i.id !== it.id)}); toast("Deleted"); return; }
+      if (x === "save") save();
+    };
+    el.querySelector("#if").onsubmit = e => { e.preventDefault(); save(); };
+    function save(){
+      const v = id => el.querySelector(id).value.trim(), mv = MOVING.has(kind);
+      const title = v("#i-title") || (mv && v("#i-to") ? `${KL[kind]} to ${v("#i-to")}` : "");
+      if (!title) { const n = el.querySelector("#i-title"); n.focus(); n.placeholder = "Add a title"; return; }
+      const sd = v("#i-sd"), st = v("#i-st"); let ed = v("#i-ed"); const et = v("#i-et"); if (!ed && et && sd) ed = sd;
+      const moved = (a,b) => (a||"") !== (b||"");
+      const out = {...d, id: d.id || uid(), kind, title,
+        start: sd ? sd + (st ? "T"+st : "") : "", end: ed ? ed + (et ? "T"+et : "") : "",
+        tz: v("#i-tz"), endTz: mv ? v("#i-etz") : "", from: mv ? v("#i-from") : "", to: mv ? v("#i-to") : "",
+        company: (mv||kind==="stay") ? v("#i-co") : "", number: (mv||kind==="stay") ? v("#i-no") : "",
+        location: v("#i-loc"), confirmation: v("#i-conf"), notes: el.querySelector("#i-notes").value.trim(), tbd: stt === "tbd" || stt === "hold", tentative: stt === "tentative", hold: stt === "hold", walkin: stt === "walkin",
+        people:[...joined].filter(p => people.includes(p)) };
+      if (moved(out.location, d.location) || moved(out.title, d.title)) { delete out.lat; delete out.lng; }
+      if (moved(out.from, d.from)) { delete out.fromLat; delete out.fromLng; }
+      if (moved(out.to, d.to)) { delete out.toLat; delete out.toLng; }
+      const items = (t.items||[]).filter(i => i.id !== out.id); items.push(out);
+      const nt = {...t, items, people:[...new Set([...(t.people||["Me"]), ...people])]};
+      if (out.start) { const s = dOf(out.start); if (!nt.startDate || s < nt.startDate) nt.startDate = s; const e = out.kind === "stay" ? s : (dOf(out.end)||s); if (!nt.endDate || e > nt.endDate) nt.endDate = e; }
+      closeSheet(); persist(nt); toast(isNew ? "Added" : "Saved");
+    }
+  };
+  inPlace ? setSheet(html, mount) : openSheet(html, mount);
+}
+
+/* ---------- share ---------- */
+async function copy(text, btn){
+  try { await navigator.clipboard.writeText(text); toast("Copied"); }
+  catch { const c = btn && btn.closest(".copyline") && btn.closest(".copyline").querySelector("code"); if (c) { const r = document.createRange(); r.selectNodeContents(c); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Selected. Copy it from the menu."); } }
+}
+function openShare(t){
+  const ask = `Share my "${t.name}" trip so friends can see it`;
+  openSheet(`${shead(`<span></span>`, "Share", `<button class="tb r" data-x="close">Done</button>`)}
+    <div class="scontent">
+      <div class="photo-prev" style="margin:4px 0 0;height:120px"><div class="art">${coverArt(t)}</div></div>
+      <div class="slbl">Just this trip</div>
+      ${t.sharedUrl ? `<div class="card"><div class="copyline"><code>${h(t.sharedUrl)}</code><button class="btn sm soft" data-copy="${h(t.sharedUrl)}">${ic("copy")}Copy</button></div></div>
+        <p class="hint">Open the shared trip, then use its Share menu to invite friends. Pick Viewer for view only, or Editor so they can make changes.</p>
+        <div class="actions"><a class="btn soft" href="${h(t.sharedUrl)}" target="_blank" rel="noopener">${ic("ext")}Open Shared Trip</a></div>`
+      : `<div class="card" style="padding:14px 16px"><p style="margin:0 0 10px">Claude makes ${h(t.name)} its own page with its own link, so friends see only this trip. Ask Claude:</p><div class="copyline" style="padding:0"><code>${h(ask)}</code><button class="btn sm soft" data-copy="${h(ask)}">${ic("copy")}Copy</button></div></div>
+        <p class="hint">On that page's Share menu you choose Viewer (view only) or Editor (can change plans) for each friend.</p>`}
+      <div class="slbl">Your whole app</div>
+      <div class="card" style="padding:14px 16px">Use the Share menu at the top of this page. Friends you add as Viewer can look through every trip. Friends you invite by email as Editor can also make changes.</div>
+      <p class="hint">Friends need a claude.ai account to open shared links.</p>
+    </div>`, el => { el.onclick = e => { const b = e.target.closest("[data-x],[data-copy]"); if (!b) return; if (b.dataset.copy) return copy(b.dataset.copy, b); if (b.dataset.x === "close") closeSheet(); }; });
+}
+
+/* ---------- inbox actions ---------- */
+function resolveEntry(m, resolution, extra){
+  Object.assign(m, {reviewed:true, resolution}, extra || {}); S.ignoring = null; render();
+  queue(() => S.db.collection("inbox").doc(m.id).update({reviewed:true, resolution, resolvedAt:Date.now(), ...(extra || {})}), "Couldn't update the inbox. Try again.");
+}
+function inboxOk(id, silent){
+  const m = inboxEntry(id); if (!m) return; const {t, it} = entryTrip(m);
+  if (it && it.review && !mirror(t)) updateItem(t, it.id, {review:false});
+  resolveEntry(m, "ok"); if (!silent) toast("Confirmed");
+}
+function inboxTentative(id){
+  const m = inboxEntry(id); if (!m) return; const {t, it} = entryTrip(m);
+  if (it && !mirror(t)) updateItem(t, it.id, {review:false, tentative:true, tbd:false});
+  resolveEntry(m, "tentative"); toast("Kept as tentative. It's on your To Book list to finalize.");
+}
+function inboxIgnore(id){
+  const m = inboxEntry(id); if (!m) return; const {t, it} = entryTrip(m);
+  if (t && it && !mirror(t)) {
+    if (m.action === "added") persist({...t, items:(t.items||[]).filter(i => i.id !== it.id)});
+    else if (m.before && typeof m.before === "object") persist({...t, items:(t.items||[]).map(i => i.id === it.id ? {...m.before, id:it.id, review:false} : i)});
+    else if (it.review) updateItem(t, it.id, {review:false});
+  }
+  resolveEntry(m, "ignored"); toast(m.action === "added" ? "Removed from the trip" : "Ignored");
+}
+function reviewAll(){ const ids = S.inbox.filter(m => inboxPending(m) && m.action !== "unmatched" && !isCancel(m)).map(m => m.id); ids.forEach(id => inboxOk(id, true)); toast(`${ids.length} confirmed`); }
+function attachTo(m, t){
+  const src = m.item || {};
+  const item = {...src, id: src.id || ("gm-" + uid().slice(0,8)), review:false, people: src.people && src.people.length ? src.people : (t.people || ["Me"]).slice()};
+  const nt = {...t, items:(t.items||[]).filter(i => i.id !== item.id).concat(item)};
+  const s = dOf(item.start), e = item.kind === "stay" ? s : (dOf(item.end) || s);
+  if (s && (!nt.startDate || s < nt.startDate)) nt.startDate = s;
+  if (e && (!nt.endDate || e > nt.endDate)) nt.endDate = e;
+  persist(nt); resolveEntry(m, "added", {tripId:t.id, tripName:t.name, itemId:item.id}); toast(`Added to ${t.name}`);
+}
+function inboxAttach(id){
+  const m = inboxEntry(id); if (!m || !m.item) return;
+  const it = m.item, d0 = dOf(it.start), d1 = (it.kind === "stay" ? dOf(it.end) : dOf(it.end)) || d0;
+  const list = S.trips.filter(t => status(t).key !== "past").map(t => { const [a,b] = tripSpan(t); const gap = a && d0 ? Math.max(0, dayDiff(b, d0), dayDiff(d1, a)) : 999; return {t, gap}; }).sort((x,y) => x.gap - y.gap || (tripSpan(x.t)[0]||"9").localeCompare(tripSpan(y.t)[0]||"9"));
+  openSheet(`${shead(`<button class="tb" data-x="cancel">Cancel</button>`, "Add to a Trip", "")}
+    <div class="scontent">
+      <div class="card" style="padding:12px 16px;margin-top:4px"><div style="font-weight:650">${h(it.title || m.title)}</div>${m.details ? `<div class="hint" style="padding:3px 0 0">${h(m.details)}</div>` : ""}</div>
+      <div class="slbl">Choose a trip</div>
+      ${list.length ? `<div class="card">${list.map(({t, gap}) => `<button class="row" data-pick="${h(t.id)}"><span class="tthumb">${coverArt(t)}</span><span class="body"><div class="t">${h(t.name)}</div><div class="s tnum">${h(fmtRange(...tripSpan(t)))}</div></span>${gap <= 2 ? `<span class="tag gm">Same dates</span>` : ""}</button>`).join("")}</div>` : `<p class="hint">No upcoming trips yet.</p>`}
+      <div class="actions"><button class="btn soft block" data-x="new">${ic("plus")}Start a New Trip With It</button></div>
+    </div>`, el => { el.onclick = e => { const b = e.target.closest("[data-x],[data-pick]"); if (!b) return;
+      if (b.dataset.x === "cancel") return closeSheet();
+      if (b.dataset.pick) { const t = tripById(b.dataset.pick); closeSheet(); if (t) attachTo(m, t); return; }
+      if (b.dataset.x === "new") { closeSheet(); editTrip(null, {startDate:d0, endDate:d1}, nt => attachTo(m, nt)); } }; });
+}
+
+/* ======================= boot ======================= */
+const SNAP = document.getElementById("snapshot-data");
+let snap = null; if (SNAP) { try { snap = JSON.parse(SNAP.textContent); } catch {} }
+if (snap && Array.isArray(snap.trips)) {
+  S.mode = "share"; S.dbState = "on"; S.canWrite = false; S.trips = snap.trips; S.photos = snap.photos || {}; S.snapAt = snap.updatedAt; S.snapTitle = snap.title;
+  if (!["trips","map"].includes(S.tab)) S.tab = "trips";
+  render();
+  return;
+}
+render();
+const fail = () => { S.mode = S.mode || "app"; S.dbState = "off"; render(); };
+if (window.claude && claude.use) {
+  claude.use("db").then(db => {
+    if (!db) return fail();
+    S.db = db;
+    db.collection("meta").onSnapshot(snap => {
+      const m = {}; snap.docs.forEach(d => m[d.id] = d.data()); S.meta = m;
+      const isTrip = m.app && m.app.mode === "trip" && m.app.tripId;
+      S.mode = isTrip ? "trip" : "app"; S.lockedTripId = isTrip ? m.app.tripId : null;
+      if (isTrip && !["trips","map","tobook"].includes(S.tab)) S.tab = "trips";
+      sweepInbox(); render();
+    }, () => { S.mode = S.mode || "app"; render(); });
+    db.collection("trips").onSnapshot(snap => { S.trips = snap.docs.map(d => ({...d.data(), id:d.id})); S.dbState = "on"; sweepInbox(); render(); },
+      () => { S.dbState = S.trips.length ? "on" : "off"; render(); toast("Lost connection to your trips. Reload to reconnect."); });
+    db.collection("photos").onSnapshot(snap => { const p = {}; snap.docs.forEach(d => p[d.id] = d.data()); S.photos = p; render(); }, () => {});
+    db.collection("inbox").orderBy("createdAt","desc").limit(200).onSnapshot(snap => { S.inbox = snap.docs.map(d => ({...d.data(), id:d.id})); sweepInbox(); render(); }, () => {});
+  }).catch(fail);
+  claude.use("user").then(async u => { if (!u) return; try { const w = await u.can("data.write"); if (w === false) { S.canWrite = false; render(); } } catch {} }).catch(() => {});
+  claude.use("sample").then(s => { S.sample = s || null; if (S.tab === "map") render(); }).catch(() => {});
+} else fail();
+})();
+</script>
+
+</body></html>
